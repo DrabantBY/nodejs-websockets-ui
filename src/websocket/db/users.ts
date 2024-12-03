@@ -1,3 +1,1 @@
-import { User } from '../types/user.ts';
-
-const users = new Set<User>();
+export const users = new Map<string, string>();
