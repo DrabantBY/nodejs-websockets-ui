@@ -1,18 +1,14 @@
 import { WebSocketServer } from 'ws';
+import dispatch from './dispatch.ts';
 
 const webSocketServer = (port: number) => {
 	const wss = new WebSocketServer({ port });
 
-	wss
-		.on('connection', () => {
-			console.log('connect emitted');
-		})
-		.on('error', () => {
-			console.log('error emitted');
-		})
-		.on('listening', () => {
-			console.log(`Start websocket server on the ${port} port!`);
-		});
+	wss.on('connection', dispatch);
+
+	wss.on('listening', () => {
+		console.log(`Start web socket server on the ${port} port!`);
+	});
 };
 
 export default webSocketServer;
