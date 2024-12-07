@@ -1,15 +1,18 @@
+import users from '../db/users.ts';
 import stringifyData from '../utils/stringifyData.ts';
-import winners from '../db/winners.ts';
 import type WebSocket from 'ws';
 
-const winService = (name: string, ws: WebSocket) => {
-	const winner = winners.find((w) => w.name === name);
-
-	if (winner) {
+const winService = (ws: WebSocket, name?: string): void => {
+	if (name) {
+		const winner = users.get(name)!;
 		winner.wins += 1;
-	} else {
-		winners.push({ name, wins: 0 });
+		users.set(name, winner);
 	}
+
+	const winners = Array.from(users.values(), ({ name, wins }) => ({
+		name,
+		wins,
+	}));
 
 	const response = stringifyData({
 		type: 'update_winners',

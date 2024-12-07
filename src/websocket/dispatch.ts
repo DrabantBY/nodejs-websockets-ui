@@ -10,8 +10,8 @@ const dispatch = (ws: WebSocket) => {
 
 		switch (true) {
 			case guard(request):
-				regService(request, ws);
-				winService(request.data.name, ws);
+				regService(ws, request);
+				winService(ws);
 				break;
 		}
 	});

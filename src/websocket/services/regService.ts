@@ -1,22 +1,32 @@
 import users from '../db/users.ts';
-import checkLogin from '../utils/checkLogin.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import type WebSocket from 'ws';
 import type { LoginRequest } from '../types/user.ts';
 
-const regService = (request: LoginRequest, ws: WebSocket) => {
-	const isUserExist = checkLogin(request.data);
-
+const regService = (ws: WebSocket, request: LoginRequest): void => {
 	const { name, password } = request.data;
 
+	const index = `${name}-${password}`;
+
+	const isUserExist = users.has(name);
+	const hasCorrectPassword =
+		isUserExist && users.get(name)?.password === password;
+
 	if (!isUserExist) {
-		users.set(name, password);
+		const user = {
+			name,
+			password,
+			index,
+			wins: 0,
+		};
+
+		users.set(name, user);
 	}
 
 	const data = {
 		name,
-		index: `${name}-${password}`,
-		error: isUserExist,
+		index,
+		error: isUserExist && !hasCorrectPassword,
 		errorText:
 			'User already exists. Please enter other user name or correct password.',
 	};
