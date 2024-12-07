@@ -1,6 +1,6 @@
-import { LoginResponse } from '../types/user.ts';
+import { Common } from '../types/common.ts';
 
-const stringifyData = (response: LoginResponse) => {
+const stringifyData = <T>(response: Common<T>) => {
 	const json = JSON.stringify(response, (key, value) =>
 		key === 'data' ? JSON.stringify(value) : value
 	);

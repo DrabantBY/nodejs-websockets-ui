@@ -1,1 +1,1 @@
-export const users = new Map<string, string>();
+export default new Map<string, string>();

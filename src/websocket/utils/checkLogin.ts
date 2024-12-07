@@ -1,4 +1,4 @@
-import { users } from '../db/users.ts';
+import users from '../db/users.ts';
 import type { Login } from '../types/user.ts';
 
 const checkLogin = ({ name, password }: Login) => {
