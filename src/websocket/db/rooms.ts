@@ -1,3 +1,3 @@
 import type { Room } from '../types/room.ts';
 
-export default new Map<number, Room>();
+export default new Map<number | string, Room>();

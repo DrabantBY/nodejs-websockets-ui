@@ -1,8 +1,8 @@
 import parseRawData from './utils/parseRawData.ts';
 import regService from './services/regService.ts';
-import * as guard from './utils/guard.ts';
 import winService from './services/winService.ts';
-import roomService from './services/roomService.ts';
+import * as guard from './utils/guard.ts';
+import * as roomService from './services/roomService.ts';
 import type WebSocket from 'ws';
 
 const dispatch = (ws: WebSocket) => {
@@ -15,12 +15,18 @@ const dispatch = (ws: WebSocket) => {
 			case guard.isRegRequest(request):
 				regService(ws, request);
 				currentUser = request.data.name;
+				roomService.sendRoom(ws);
 				winService(ws);
-				roomService(ws, currentUser);
 				break;
 
 			case guard.isCreateRoomRequest(request):
-				roomService(ws, currentUser, 'create');
+				roomService.createRoom(currentUser);
+				roomService.sendRoom(ws);
+				break;
+
+			case guard.isAddToRoomRequest(request):
+				roomService.updateRoom(request.data.indexRoom, currentUser);
+				roomService.sendRoom(ws);
 				break;
 		}
 	});

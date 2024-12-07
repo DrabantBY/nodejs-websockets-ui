@@ -16,4 +16,12 @@ export type CreateRoomRequest = {
 	id: 0;
 };
 
+export type AddToRoomRequest = {
+	type: 'add_user_to_room';
+	data: {
+		indexRoom: number | string;
+	};
+	id: 0;
+};
+
 export type RoomResponse = Common<Room[]>;
