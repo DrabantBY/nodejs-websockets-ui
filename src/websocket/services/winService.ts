@@ -9,10 +9,12 @@ const winService = (ws: WebSocket, name?: string): void => {
 		users.set(name, winner);
 	}
 
-	const winners = Array.from(users.values(), ({ name, wins }) => ({
-		name,
-		wins,
-	}));
+	const winners = [...users.values()]
+		.map(({ name, wins }) => ({
+			name,
+			wins,
+		}))
+		.filter(({ wins }) => wins > 0);
 
 	const response = stringifyData({
 		type: 'update_winners',
