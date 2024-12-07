@@ -5,7 +5,7 @@ import * as guard from './utils/guard.ts';
 import * as roomService from './services/roomService.ts';
 import type WebSocket from 'ws';
 
-const dispatch = (ws: WebSocket) => {
+export default function dispatch(this: WebSocket.Server, ws: WebSocket): void {
 	let currentUser!: string;
 
 	ws.on('message', (rawData) => {
@@ -15,21 +15,19 @@ const dispatch = (ws: WebSocket) => {
 			case guard.isRegRequest(request):
 				regService(ws, request);
 				currentUser = request.data.name;
-				roomService.sendRoom(ws);
-				winService(ws);
+				roomService.sendRoom(this);
+				winService(this);
 				break;
 
 			case guard.isCreateRoomRequest(request):
 				roomService.createRoom(currentUser);
-				roomService.sendRoom(ws);
+				roomService.sendRoom(this);
 				break;
 
 			case guard.isAddToRoomRequest(request):
 				roomService.updateRoom(request.data.indexRoom, currentUser);
-				roomService.sendRoom(ws);
+				roomService.sendRoom(this);
 				break;
 		}
 	});
-};
-
-export default dispatch;
+}

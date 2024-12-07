@@ -2,7 +2,7 @@ import users from '../db/users.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import type WebSocket from 'ws';
 
-const winService = (ws: WebSocket, name?: string): void => {
+function winService(wss: WebSocket.Server, name?: string): void {
 	if (name) {
 		const winner = users.get(name)!;
 		winner.wins += 1;
@@ -22,7 +22,12 @@ const winService = (ws: WebSocket, name?: string): void => {
 		id: 0,
 	});
 
-	ws.send(response);
-};
+	wss.clients.forEach((client) => {
+		//@ts-ignore
+		if (client.index) {
+			client.send(response);
+		}
+	});
+}
 
 export default winService;

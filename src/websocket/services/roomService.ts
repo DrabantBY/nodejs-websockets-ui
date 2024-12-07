@@ -1,9 +1,9 @@
 import stringifyData from '../utils/stringifyData.ts';
 import rooms from '../db/rooms.ts';
 import users from '../db/users.ts';
-import type WebSocket from 'ws';
+import WebSocket from 'ws';
 
-export const sendRoom = (ws: WebSocket): void => {
+export const sendRoom = (wss: WebSocket.Server): void => {
 	const data = [...rooms.values()];
 
 	const response = stringifyData({
@@ -12,11 +12,16 @@ export const sendRoom = (ws: WebSocket): void => {
 		id: 0,
 	});
 
-	ws.send(response);
+	wss.clients.forEach((client) => {
+		//@ts-ignore
+		if (client.index) {
+			client.send(response);
+		}
+	});
 };
 
 export const createRoom = (name: string): void => {
-	const roomId = rooms.size;
+	const roomId = rooms.size + 1;
 	const { index } = users.get(name)!;
 	const user = { name, index };
 	const room = { roomId, roomUsers: [user] };

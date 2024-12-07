@@ -6,7 +6,9 @@ import type { LoginRequest } from '../types/user.ts';
 const regService = (ws: WebSocket, request: LoginRequest): void => {
 	const { name, password } = request.data;
 
-	const index = users.size;
+	const index = users.size + 1;
+	//@ts-ignore
+	ws.index = index;
 
 	const isUserExist = users.has(name);
 	const hasCorrectPassword =
