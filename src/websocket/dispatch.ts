@@ -7,11 +7,7 @@ import parseRawData from './utils/parseRawData.ts';
 import type { IncomingMessage } from 'node:http';
 import type WebSocket from 'ws';
 
-export default function dispatch(
-	this: WebSocket.Server,
-	ws: WebSocket,
-	req: IncomingMessage
-): void {
+export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 	let currentUser!: string;
 
 	const key = req.headers['sec-websocket-key']!;
@@ -23,19 +19,19 @@ export default function dispatch(
 			case guard.isRegRequest(request):
 				regService(ws, request, key);
 				currentUser = request.data.name;
-				roomService.sendRoom(this);
-				winService(this);
+				roomService.sendRoom();
+				winService();
 				break;
 
 			case guard.isCreateRoomRequest(request):
 				roomService.createRoom(currentUser);
-				roomService.sendRoom(this);
+				roomService.sendRoom();
 				break;
 
 			case guard.isAddToRoomRequest(request):
 				const { indexRoom } = request.data;
 				roomService.updateRoom(indexRoom, currentUser);
-				roomService.sendRoom(this);
+				roomService.sendRoom();
 				gameService.createGame(indexRoom);
 				break;
 		}

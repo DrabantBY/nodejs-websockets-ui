@@ -1,4 +1,5 @@
 import mapUsers from '../db/users.ts';
+import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import type WebSocket from 'ws';
 import type { LoginRequest } from '../types/user.ts';
@@ -10,14 +11,13 @@ const regService = (
 ): void => {
 	const { name, password } = request.data;
 
-	//@ts-ignore
-	ws.id = index;
-
 	const isUserExist = mapUsers.has(name);
 	const hasCorrectPassword =
 		isUserExist && mapUsers.get(name)?.password === password;
 
 	if (!isUserExist) {
+		mapClients.set(index, ws);
+
 		const user = {
 			name,
 			password,
