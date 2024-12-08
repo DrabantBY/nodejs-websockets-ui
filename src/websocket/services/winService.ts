@@ -1,15 +1,15 @@
-import users from '../db/users.ts';
+import mapUsers from '../db/users.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import type WebSocket from 'ws';
 
-function winService(wss: WebSocket.Server, name?: string): void {
+const winService = (wss: WebSocket.Server, name?: string): void => {
 	if (name) {
-		const winner = users.get(name)!;
+		const winner = mapUsers.get(name)!;
 		winner.wins += 1;
-		users.set(name, winner);
+		mapUsers.set(name, winner);
 	}
 
-	const winners = [...users.values()]
+	const winners = [...mapUsers.values()]
 		.map(({ name, wins }) => ({
 			name,
 			wins,
@@ -24,10 +24,10 @@ function winService(wss: WebSocket.Server, name?: string): void {
 
 	wss.clients.forEach((client) => {
 		//@ts-ignore
-		if (client.index) {
+		if (client.id) {
 			client.send(response);
 		}
 	});
-}
+};
 
 export default winService;

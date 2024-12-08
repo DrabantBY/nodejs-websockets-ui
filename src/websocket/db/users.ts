@@ -1,3 +1,5 @@
 import type { User } from '../types/user.ts';
 
-export default new Map<string, User>();
+const mapUsers = new Map<string, User>();
+
+export default mapUsers;

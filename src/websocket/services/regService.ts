@@ -1,18 +1,21 @@
-import users from '../db/users.ts';
+import mapUsers from '../db/users.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import type WebSocket from 'ws';
 import type { LoginRequest } from '../types/user.ts';
 
-const regService = (ws: WebSocket, request: LoginRequest): void => {
+const regService = (
+	ws: WebSocket,
+	request: LoginRequest,
+	index: string
+): void => {
 	const { name, password } = request.data;
 
-	const index = users.size + 1;
 	//@ts-ignore
-	ws.index = index;
+	ws.id = index;
 
-	const isUserExist = users.has(name);
+	const isUserExist = mapUsers.has(name);
 	const hasCorrectPassword =
-		isUserExist && users.get(name)?.password === password;
+		isUserExist && mapUsers.get(name)?.password === password;
 
 	if (!isUserExist) {
 		const user = {
@@ -22,7 +25,7 @@ const regService = (ws: WebSocket, request: LoginRequest): void => {
 			wins: 0,
 		};
 
-		users.set(name, user);
+		mapUsers.set(name, user);
 	}
 
 	const data = {

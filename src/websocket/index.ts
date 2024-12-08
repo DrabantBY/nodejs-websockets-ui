@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 import dispatch from './dispatch.ts';
 
-const webSocketServer = (port: number) => {
+const webSocketServer = (port: number): void => {
 	const wss = new WebSocketServer({ port });
 
 	wss.on('connection', dispatch);
