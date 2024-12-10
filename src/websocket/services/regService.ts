@@ -1,36 +1,48 @@
 import mapUsers from '../db/users.ts';
-import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
+import ids from '../db/ids.ts';
 import type WebSocket from 'ws';
 import type { LoginRequest } from '../types/user.ts';
 
 const regService = (
 	ws: WebSocket,
 	request: LoginRequest,
-	index: string
+	key: string
 ): void => {
 	const { name, password } = request.data;
 
 	const isUserExist = mapUsers.has(name);
-	const hasCorrectPassword =
-		isUserExist && mapUsers.get(name)?.password === password;
+
+	const hasCorrectPassword = mapUsers.get(name)?.password === password;
+
+	let id: string | number = '';
 
 	if (!isUserExist) {
-		mapClients.set(index, ws);
-
 		const user = {
 			name,
 			password,
-			index,
+			index: key,
 			wins: 0,
 		};
 
 		mapUsers.set(name, user);
+
+		ids[key] = key;
+
+		id = key;
+	}
+
+	if (hasCorrectPassword) {
+		const { index } = mapUsers.get(name)!;
+
+		ids[index] = key;
+
+		id = index;
 	}
 
 	const data = {
 		name,
-		index,
+		index: id,
 		error: isUserExist && !hasCorrectPassword,
 		errorText:
 			'User already exists. Please enter other user name or correct password.',

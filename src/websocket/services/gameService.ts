@@ -1,6 +1,7 @@
 import mapRooms from '../db/rooms.ts';
 import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
+import ids from '../db/ids.ts';
 
 export const createGame = (indexRoom: string | number) => {
 	const { roomUsers } = mapRooms.get(indexRoom)!;
@@ -9,7 +10,7 @@ export const createGame = (indexRoom: string | number) => {
 		return;
 	}
 
-	const idGame = `${roomUsers[0].index}-${roomUsers[1].index}`;
+	const idGame = `${roomUsers[0].index}&${roomUsers[1].index}`;
 
 	roomUsers.forEach(({ index }) => {
 		const data = {
@@ -23,7 +24,7 @@ export const createGame = (indexRoom: string | number) => {
 			id: 0,
 		});
 
-		mapClients.get(index)?.send(response);
+		mapClients.get(ids[index])?.send(response);
 	});
 
 	mapRooms.delete(indexRoom);

@@ -34,7 +34,7 @@ export const updateRoom = (indexRoom: string | number, name: string): void => {
 	}
 
 	const { index } = mapUsers.get(name)!;
-	const user = { name, index };
-	room.roomUsers.push(user);
+	const roomUser = { name, index };
+	room.roomUsers.push(roomUser);
 	mapRooms.set(indexRoom, room);
 };
