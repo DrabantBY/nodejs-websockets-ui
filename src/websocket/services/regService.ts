@@ -1,4 +1,5 @@
 import mapUsers from '../db/users.ts';
+import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import ids from '../db/ids.ts';
 import type WebSocket from 'ws';
@@ -14,6 +15,8 @@ const regService = (
 	const isUserExist = mapUsers.has(name);
 
 	const hasCorrectPassword = mapUsers.get(name)?.password === password;
+
+	let isActiveUser = false;
 
 	let id: string | number = '';
 
@@ -35,7 +38,11 @@ const regService = (
 	if (hasCorrectPassword) {
 		const { index } = mapUsers.get(name)!;
 
-		ids[index] = key;
+		isActiveUser = mapClients.has(ids[index]);
+
+		if (!isActiveUser) {
+			ids[index] = key;
+		}
 
 		id = index;
 	}
@@ -43,9 +50,10 @@ const regService = (
 	const data = {
 		name,
 		index: id,
-		error: isUserExist && !hasCorrectPassword,
-		errorText:
-			'User already exists. Please enter other user name or correct password.',
+		error: (isUserExist && !hasCorrectPassword) || isActiveUser,
+		errorText: isActiveUser
+			? 'User is already active on another page. Please close that page first.'
+			: 'User already exists. Please enter other user name or correct password.',
 	};
 
 	const response = stringifyData({ ...request, data });
