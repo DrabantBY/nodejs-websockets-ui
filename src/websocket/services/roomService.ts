@@ -18,24 +18,25 @@ export const sendRoom = (): void => {
 
 export const createRoom = (name: string): void => {
 	const roomId = uuid();
-	const { index, wsId } = mapUsers.get(name)!;
-	const roomUser = { name, index, wsId };
+	const { index } = mapUsers.get(name)!;
+	const roomUser = { name, index };
 	const room = { roomId, roomUsers: [roomUser] };
 	mapRooms.set(roomId, room);
 };
 
 export const updateRoom = (indexRoom: string | number, name: string): void => {
-	const room = mapRooms.get(indexRoom)!;
+	const room = mapRooms.get(indexRoom);
 
 	if (
+		!room ||
 		room.roomUsers.some((user) => user.name === name) ||
 		room.roomUsers.length > 2
 	) {
 		return;
 	}
 
-	const { index, wsId } = mapUsers.get(name)!;
-	const roomUser = { name, index, wsId };
+	const { index } = mapUsers.get(name)!;
+	const roomUser = { name, index };
 	room.roomUsers.push(roomUser);
 	mapRooms.set(indexRoom, room);
 };

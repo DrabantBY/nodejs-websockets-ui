@@ -3,7 +3,6 @@ import type { Common } from './common.ts';
 type RoomUser = {
 	name: string;
 	index: string | number;
-	wsId: string;
 };
 
 export type Room = {

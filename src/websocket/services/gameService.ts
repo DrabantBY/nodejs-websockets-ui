@@ -1,11 +1,13 @@
 import { v4 as uuid } from 'uuid';
 import mapRooms from '../db/rooms.ts';
+import mapUsers from '../db/users.ts';
 import mapGames from '../db/games.ts';
+import mapKeys from '../db/keys.ts';
 import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import type { Player } from '../types/game.ts';
 
-export const createGame = (indexRoom: string | number) => {
+export const createGame = (indexRoom: string | number): void => {
 	const { roomUsers } = mapRooms.get(indexRoom)!;
 
 	if (roomUsers.length !== 2) {
@@ -19,7 +21,7 @@ export const createGame = (indexRoom: string | number) => {
 	mapRooms.delete(indexRoom);
 	mapGames.set(idGame, { gameId, players });
 
-	roomUsers.forEach(({ index: idPlayer, wsId }) => {
+	roomUsers.forEach(({ index: idPlayer }) => {
 		const data = {
 			idGame,
 			idPlayer,
@@ -31,7 +33,23 @@ export const createGame = (indexRoom: string | number) => {
 			id: 0,
 		});
 
-		mapClients.get(wsId)?.send(response);
+		mapClients.get(mapKeys[idPlayer])?.send(response);
+	});
+};
+
+export const turn = (players: (string | number)[]): void => {
+	players.forEach((currentPlayer) => {
+		const client = mapClients.get(mapKeys[currentPlayer]);
+
+		if (!client) {
+			return;
+		}
+
+		const data = { currentPlayer };
+
+		const response = stringifyData({ type: 'turn', data, id: 0 });
+
+		client.send(response);
 	});
 };
 
@@ -44,21 +62,32 @@ export const startGame = (player: Player): void => {
 
 	mapGames.set(gameId, game);
 
-	if (game.players.length === 1) {
+	if (game.players.length !== 2) {
 		return;
 	}
 
-	// game.players.forEach((player) => {
-	// 	const;
-	// });
+	game.players.forEach(({ ships, indexPlayer: currentPlayerIndex }) => {
+		const client = mapClients.get(mapKeys[currentPlayerIndex]);
 
-	// const data = { ships, currentPlayerIndex };
+		if (!client) {
+			return;
+		}
 
-	// const response = stringifyData({
-	// 	type: 'start_game',
-	// 	data,
-	// 	id: 0,
-	// });
+		const data = {
+			ships,
+			currentPlayerIndex,
+		};
 
-	// console.log(response);
+		const response = stringifyData({
+			type: 'start_game',
+			data,
+			id: 0,
+		});
+
+		client.send(response);
+	});
+
+	const players = game.players.map(({ indexPlayer }) => indexPlayer);
+
+	turn(players);
 };

@@ -10,5 +10,4 @@ export type LoginRequest = Common<Login>;
 export type User = Login & {
 	index: string | number;
 	wins: number;
-	wsId: string;
 };
