@@ -36,7 +36,7 @@ export const createGame = (indexRoom: string | number) => {
 };
 
 export const startGame = (player: Player): void => {
-	const { gameId, ships, indexPlayer: currentPlayerIndex } = player;
+	const { gameId } = player;
 
 	const game = mapGames.get(gameId)!;
 
@@ -44,11 +44,13 @@ export const startGame = (player: Player): void => {
 
 	mapGames.set(gameId, game);
 
-	game.players.forEach((el) => console.log(el.indexPlayer));
-
 	if (game.players.length === 1) {
 		return;
 	}
+
+	// game.players.forEach((player) => {
+	// 	const;
+	// });
 
 	// const data = { ships, currentPlayerIndex };
 
