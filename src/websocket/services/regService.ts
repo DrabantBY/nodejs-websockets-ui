@@ -1,9 +1,9 @@
-import mapUsers from '../db/users.ts';
-import stringifyData from '../utils/stringifyData.ts';
 import { v4 as uuid } from 'uuid';
+import mapUsers from '../db/users.ts';
+import mapClients from '../db/clients.ts';
+import stringifyData from '../utils/stringifyData.ts';
 import type WebSocket from 'ws';
 import type { LoginRequest, LoginError } from '../types/user.ts';
-import mapClients from '../db/clients.ts';
 
 const regService = (
 	ws: WebSocket,
@@ -46,9 +46,16 @@ const regService = (
 	const hasCorrectPassword = mapUsers.get(name)?.password === password;
 
 	if (hasCorrectPassword) {
-		const { index, wsId } = mapUsers.get(name)!;
+		const user = mapUsers.get(name)!;
 
-		const isAlreadyActive = mapClients.has(wsId);
+		const { index, wsId: oldWsId } = user;
+
+		const isAlreadyActive = mapClients.has(oldWsId);
+
+		if (!isAlreadyActive) {
+			user.wsId = wsId;
+			mapUsers.set(name, user);
+		}
 
 		data = {
 			name,

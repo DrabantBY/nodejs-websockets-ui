@@ -7,6 +7,7 @@ import parseRawData from './utils/parseRawData.ts';
 import mapClients from './db/clients.ts';
 import type { IncomingMessage } from 'node:http';
 import type WebSocket from 'ws';
+import mapRooms from './db/rooms.ts';
 
 export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 	let currentUser!: string;
@@ -36,6 +37,11 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				roomService.updateRoom(indexRoom, currentUser);
 				roomService.sendRoom();
 				gameService.createGame(indexRoom);
+				break;
+
+			case guard.isAddShipsRequest(request):
+				const { data } = request;
+				gameService.startGame(data);
 				break;
 		}
 	});

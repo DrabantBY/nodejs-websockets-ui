@@ -1,10 +1,15 @@
 import mapClients from '../db/clients.ts';
+import mapUsers from '../db/users.ts';
 
 const sendAllClients = (response: string) => {
-	const clients = mapClients.values();
+	const users = mapUsers.values();
 
-	for (const client of clients) {
-		client.send(response);
+	for (const user of users) {
+		const client = mapClients.get(user.wsId);
+
+		if (client) {
+			client.send(response);
+		}
 	}
 };
 
