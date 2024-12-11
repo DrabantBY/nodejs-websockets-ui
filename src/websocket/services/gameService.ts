@@ -1,9 +1,9 @@
 import { v4 as uuid } from 'uuid';
 import mapRooms from '../db/rooms.ts';
+import mapGames from '../db/games.ts';
 import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
-import { Player } from '../types/game.ts';
-import mapGames from '../db/games.ts';
+import type { Player } from '../types/game.ts';
 
 export const createGame = (indexRoom: string | number) => {
 	const { roomUsers } = mapRooms.get(indexRoom)!;

@@ -3,7 +3,7 @@ import mapUsers from '../db/users.ts';
 import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import type WebSocket from 'ws';
-import type { LoginRequest, LoginError } from '../types/user.ts';
+import type { LoginRequest } from '../types/user.ts';
 
 const regService = (
 	ws: WebSocket,
@@ -11,8 +11,6 @@ const regService = (
 	wsId: string
 ): void => {
 	const { name, password } = request.data;
-
-	let data: LoginError;
 
 	const isUserExist = mapUsers.has(name);
 
@@ -29,7 +27,7 @@ const regService = (
 
 		mapUsers.set(name, user);
 
-		data = {
+		const data = {
 			name,
 			index,
 			error: isUserExist,
@@ -57,7 +55,7 @@ const regService = (
 			mapUsers.set(name, user);
 		}
 
-		data = {
+		const data = {
 			name,
 			index,
 			error: isAlreadyActive,
@@ -73,7 +71,7 @@ const regService = (
 		return;
 	}
 
-	data = {
+	const data = {
 		name,
 		index: '',
 		error: isUserExist,
