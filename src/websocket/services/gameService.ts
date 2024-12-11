@@ -1,7 +1,7 @@
+import { v4 as uuid } from 'uuid';
 import mapRooms from '../db/rooms.ts';
 import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
-import ids from '../db/ids.ts';
 
 export const createGame = (indexRoom: string | number) => {
 	const { roomUsers } = mapRooms.get(indexRoom)!;
@@ -10,9 +10,9 @@ export const createGame = (indexRoom: string | number) => {
 		return;
 	}
 
-	const idGame = `${roomUsers[0].index}&${roomUsers[1].index}`;
+	const idGame = uuid();
 
-	roomUsers.forEach(({ index }) => {
+	roomUsers.forEach(({ index, wsId }) => {
 		const data = {
 			idGame,
 			idPlayer: index,
@@ -24,7 +24,7 @@ export const createGame = (indexRoom: string | number) => {
 			id: 0,
 		});
 
-		mapClients.get(ids[index])?.send(response);
+		mapClients.get(wsId)?.send(response);
 	});
 
 	mapRooms.delete(indexRoom);

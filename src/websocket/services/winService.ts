@@ -9,7 +9,7 @@ const winService = (name?: string): void => {
 		mapUsers.set(name, winner);
 	}
 
-	const winners = [...mapUsers.values()]
+	const data = [...mapUsers.values()]
 		.map(({ name, wins }) => ({
 			name,
 			wins,
@@ -18,7 +18,7 @@ const winService = (name?: string): void => {
 
 	const response = stringifyData({
 		type: 'update_winners',
-		data: winners,
+		data,
 		id: 0,
 	});
 

@@ -1,6 +1,7 @@
-import stringifyData from '../utils/stringifyData.ts';
+import { v4 as uuid } from 'uuid';
 import mapRooms from '../db/rooms.ts';
 import mapUsers from '../db/users.ts';
+import stringifyData from '../utils/stringifyData.ts';
 import sendAllClients from '../utils/sendAllClients.ts';
 
 export const sendRoom = (): void => {
@@ -16,10 +17,10 @@ export const sendRoom = (): void => {
 };
 
 export const createRoom = (name: string): void => {
-	const roomId = mapRooms.size + 1;
-	const { index } = mapUsers.get(name)!;
-	const user = { name, index };
-	const room = { roomId, roomUsers: [user] };
+	const roomId = uuid();
+	const { index, wsId } = mapUsers.get(name)!;
+	const roomUser = { name, index, wsId };
+	const room = { roomId, roomUsers: [roomUser] };
 	mapRooms.set(roomId, room);
 };
 
@@ -33,8 +34,8 @@ export const updateRoom = (indexRoom: string | number, name: string): void => {
 		return;
 	}
 
-	const { index } = mapUsers.get(name)!;
-	const roomUser = { name, index };
+	const { index, wsId } = mapUsers.get(name)!;
+	const roomUser = { name, index, wsId };
 	room.roomUsers.push(roomUser);
 	mapRooms.set(indexRoom, room);
 };

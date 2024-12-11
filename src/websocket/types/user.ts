@@ -5,7 +5,7 @@ export type Login = {
 	password: string;
 };
 
-type LoginError = {
+export type LoginError = {
 	name: string;
 	index: string | number;
 	error: boolean;
@@ -17,4 +17,5 @@ export type LoginRequest = Common<Login>;
 export type User = Login & {
 	index: string | number;
 	wins: number;
+	wsId: string;
 };

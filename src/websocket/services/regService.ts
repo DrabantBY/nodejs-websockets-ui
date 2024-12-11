@@ -1,59 +1,77 @@
 import mapUsers from '../db/users.ts';
-import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
-import ids from '../db/ids.ts';
+import { v4 as uuid } from 'uuid';
 import type WebSocket from 'ws';
-import type { LoginRequest } from '../types/user.ts';
+import type { LoginRequest, LoginError } from '../types/user.ts';
+import mapClients from '../db/clients.ts';
 
 const regService = (
 	ws: WebSocket,
 	request: LoginRequest,
-	key: string
+	wsId: string
 ): void => {
 	const { name, password } = request.data;
 
+	let data: LoginError;
+
 	const isUserExist = mapUsers.has(name);
 
-	const hasCorrectPassword = mapUsers.get(name)?.password === password;
-
-	let isActiveUser = false;
-
-	let id: string | number = '';
-
 	if (!isUserExist) {
+		const index = uuid();
+
 		const user = {
 			name,
 			password,
-			index: key,
+			index,
 			wins: 0,
+			wsId,
 		};
 
 		mapUsers.set(name, user);
 
-		ids[key] = key;
+		data = {
+			name,
+			index,
+			error: isUserExist,
+			errorText: '',
+		};
 
-		id = key;
+		const response = stringifyData({ ...request, data });
+
+		ws.send(response);
+
+		return;
 	}
+
+	const hasCorrectPassword = mapUsers.get(name)?.password === password;
 
 	if (hasCorrectPassword) {
-		const { index } = mapUsers.get(name)!;
+		const { index, wsId } = mapUsers.get(name)!;
 
-		isActiveUser = mapClients.has(ids[index]);
+		const isAlreadyActive = mapClients.has(wsId);
 
-		if (!isActiveUser) {
-			ids[index] = key;
-		}
+		data = {
+			name,
+			index,
+			error: isAlreadyActive,
+			errorText: isAlreadyActive
+				? 'User is already active on another page. Please close that page first.'
+				: '',
+		};
 
-		id = index;
+		const response = stringifyData({ ...request, data });
+
+		ws.send(response);
+
+		return;
 	}
 
-	const data = {
+	data = {
 		name,
-		index: id,
-		error: (isUserExist && !hasCorrectPassword) || isActiveUser,
-		errorText: isActiveUser
-			? 'User is already active on another page. Please close that page first.'
-			: 'User already exists. Please enter other user name or correct password.',
+		index: '',
+		error: isUserExist,
+		errorText:
+			'User already exists. Please enter other user name or correct password.',
 	};
 
 	const response = stringifyData({ ...request, data });
