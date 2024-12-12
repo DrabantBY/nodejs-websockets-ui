@@ -1,6 +1,6 @@
 import type { Position, Ship } from '../types/game.ts';
 
-const checkAttack = (ships: Ship[], { x, y }: Position) => {
+const checkAttack = (ships: Ship[], { x, y }: Position): string => {
 	let result = false;
 
 	for (const ship of ships) {

@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid';
+import { v4 } from 'uuid';
 import mapRooms from '../db/rooms.ts';
 import mapGames from '../db/games.ts';
 import mapKeys from '../db/keys.ts';
@@ -14,53 +14,37 @@ export const createGame = (indexRoom: string | number): void => {
 		return;
 	}
 
-	const idGame = uuid();
+	const idGame = v4();
 	const gameId = idGame;
 	const players: Player[] = [];
 
-	mapRooms.delete(indexRoom);
 	mapGames.set(idGame, { gameId, players });
 
-	roomUsers.forEach(({ index: idPlayer }) => {
-		const data = {
-			idGame,
-			idPlayer,
-		};
-
+	roomUsers.forEach(({ index }) => {
 		const response = stringifyData({
-			type: 'create_game',
-			data,
 			id: 0,
+			type: 'create_game',
+			data: {
+				idGame,
+				idPlayer: index,
+			},
 		});
 
-		mapClients.get(mapKeys[idPlayer])?.send(response);
+		mapClients.get(mapKeys[index])?.send(response);
 	});
+
+	mapRooms.delete(indexRoom);
 };
 
-export const turn = (
-	gameId: string | number,
-	indexPlayer: string | number
-): void => {
-	const players = mapGames
-		.get(gameId)
-		?.players.map(({ indexPlayer }) => indexPlayer);
+export const turn = (gameId: string | number): void => {
+	mapGames.get(gameId)?.players.forEach(({ indexPlayer }) => {
+		const response = stringifyData({
+			id: 0,
+			type: 'turn',
+			data: { currentPlayer: indexPlayer },
+		});
 
-	if (!players) {
-		return;
-	}
-
-	players.forEach((currentPlayer) => {
-		const client = mapClients.get(mapKeys[currentPlayer]);
-
-		if (!client) {
-			return;
-		}
-
-		const data = { currentPlayer: indexPlayer };
-
-		const response = stringifyData({ type: 'turn', data, id: 0 });
-
-		client.send(response);
+		mapClients.get(mapKeys[indexPlayer])?.send(response);
 	});
 };
 
@@ -77,68 +61,46 @@ export const startGame = (player: Player): void => {
 		return;
 	}
 
-	const [player1, player2] = game.players;
+	game.players.forEach(({ ships, indexPlayer }) => {
+		const response = stringifyData({
+			id: 0,
+			type: 'start_game',
+			data: {
+				ships,
+				currentPlayerIndex: indexPlayer,
+			},
+		});
 
-	const client1 = mapClients.get(mapKeys[player1.indexPlayer]);
-	const client2 = mapClients.get(mapKeys[player2.indexPlayer]);
-
-	const data1 = {
-		ships: player1.ships,
-		currentPlayerIndex: player1.indexPlayer,
-	};
-
-	const data2 = {
-		ships: player2.ships,
-		currentPlayerIndex: player2.indexPlayer,
-	};
-
-	const response1 = stringifyData({
-		id: 0,
-		type: 'start_game',
-		data: data1,
+		mapClients.get(mapKeys[indexPlayer])?.send(response);
 	});
 
-	const response2 = stringifyData({
-		id: 0,
-		type: 'start_game',
-		data: data2,
-	});
-
-	client1?.send(response1);
-	client2?.send(response2);
-
-	turn(gameId, player.indexPlayer);
+	turn(gameId);
 };
 
 export const attack = (request: AttackRequest): void => {
 	const { gameId, indexPlayer, ...position } = request.data;
 
-	const { ships } = mapGames
-		.get(gameId)
-		?.players?.find((player) => player.indexPlayer === indexPlayer)!;
+	const { players } = mapGames.get(gameId)!;
+
+	const { ships } = players.find(
+		(player) => player.indexPlayer !== indexPlayer
+	)!;
 
 	const status = checkAttack(ships, position);
 
-	const data = {
-		position,
-		currentPlayer: indexPlayer,
-		status,
-	};
-
 	const response = stringifyData({
 		...request,
-		data,
+		data: {
+			position,
+			currentPlayer: indexPlayer,
+			status,
+		},
 	});
 
-	mapGames.get(gameId)?.players.forEach(({ indexPlayer }) => {
-		const client = mapClients.get(mapKeys[indexPlayer]);
-
-		if (!client) {
-			return;
-		}
-
+	players.forEach(({ indexPlayer }) => {
+		const client = mapClients.get(mapKeys[indexPlayer])!;
 		client.send(response);
 	});
 
-	turn(gameId, indexPlayer);
+	turn(gameId);
 };

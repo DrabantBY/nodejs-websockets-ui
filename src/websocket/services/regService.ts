@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid';
+import { v4 } from 'uuid';
 import mapUsers from '../db/users.ts';
 import mapClients from '../db/clients.ts';
 import mapKeys from '../db/keys.ts';
@@ -16,7 +16,7 @@ const regService = (
 	const isUserExist = mapUsers.has(name);
 
 	if (!isUserExist) {
-		const index = uuid();
+		const index = v4();
 
 		const user = {
 			name,
@@ -46,9 +46,7 @@ const regService = (
 	const hasCorrectPassword = mapUsers.get(name)?.password === password;
 
 	if (hasCorrectPassword) {
-		const user = mapUsers.get(name)!;
-
-		const { index } = user;
+		const { index } = mapUsers.get(name)!;
 
 		const isAlreadyActive = mapClients.has(mapKeys[index]);
 

@@ -1,4 +1,4 @@
-import { Common } from '../types/common.ts';
+import type { Common } from '../types/common.ts';
 
 const stringifyData = <T>(response: Common<T>): string => {
 	const json = JSON.stringify(response, (key, value) =>
