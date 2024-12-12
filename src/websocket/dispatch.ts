@@ -1,13 +1,12 @@
 import * as roomService from './services/roomService.ts';
 import * as gameService from './services/gameService.ts';
-import * as guard from './utils/guard.ts';
+import * as checkRequest from './utils/checkRequest.ts';
 import winService from './services/winService.ts';
 import regService from './services/regService.ts';
 import parseRawData from './utils/parseRawData.ts';
 import mapClients from './db/clients.ts';
 import type { IncomingMessage } from 'node:http';
 import type WebSocket from 'ws';
-import mapRooms from './db/rooms.ts';
 
 export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 	let currentUser!: string;
@@ -20,28 +19,34 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 		const request = parseRawData(rawData);
 
 		switch (true) {
-			case guard.isRegRequest(request):
+			case checkRequest.isRegRequest(request):
 				regService(ws, request, key);
 				currentUser = request.data.name;
 				roomService.sendRoom();
 				winService();
 				break;
 
-			case guard.isCreateRoomRequest(request):
+			case checkRequest.isCreateRoomRequest(request):
 				roomService.createRoom(currentUser);
 				roomService.sendRoom();
 				break;
 
-			case guard.isAddToRoomRequest(request):
+			case checkRequest.isAddToRoomRequest(request):
 				const { indexRoom } = request.data;
 				roomService.updateRoom(indexRoom, currentUser);
 				roomService.sendRoom();
 				gameService.createGame(indexRoom);
 				break;
 
-			case guard.isAddShipsRequest(request):
+			case checkRequest.isAddShipsRequest(request):
 				const { data } = request;
 				gameService.startGame(data);
+				break;
+
+			case checkRequest.isAttackRequest(request):
+				gameService.attack(request);
+				break;
+			case checkRequest.isRandomAttackRequest(request):
 				break;
 		}
 	});
