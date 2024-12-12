@@ -39,14 +39,11 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				break;
 
 			case checkRequest.isAddShipsRequest(request):
-				const { data } = request;
-				gameService.startGame(data);
+				gameService.startGame(request.data);
 				break;
 
 			case checkRequest.isAttackRequest(request):
-				gameService.attack(request);
-				break;
-			case checkRequest.isRandomAttackRequest(request):
+				gameService.attack(request.data);
 				break;
 		}
 	});

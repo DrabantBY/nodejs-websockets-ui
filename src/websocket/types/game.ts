@@ -12,22 +12,20 @@ export type Ship = {
 	type: ShipSize;
 };
 
-export type RandomAttack = {
+export type Attack = {
 	gameId: number | string;
 	indexPlayer: number | string;
-};
+} & Partial<Position>;
 
-export type Attack = RandomAttack & Position;
-
-export type RandomAttackRequest = {
+export type AttackRequest = {
 	id: 0;
-	type: 'randomAttack';
-	data: RandomAttack;
+	type: 'attack' | 'randomAttack';
+	data: Attack;
 };
 
-export type AttackRequest = { id: 0; type: 'attack'; data: Attack };
-
-export type Player = RandomAttack & {
+export type Player = {
+	gameId: number | string;
+	indexPlayer: number | string;
 	ships: Ship[];
 };
 

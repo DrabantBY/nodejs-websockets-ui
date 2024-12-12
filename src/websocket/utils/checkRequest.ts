@@ -1,11 +1,7 @@
 import type { Common } from '../types/common.ts';
 import type { LoginRequest } from '../types/user.ts';
 import type { AddToRoomRequest, CreateRoomRequest } from '../types/room.ts';
-import type {
-	AddShipsRequest,
-	AttackRequest,
-	RandomAttackRequest,
-} from '../types/game.ts';
+import type { AddShipsRequest, AttackRequest } from '../types/game.ts';
 
 export const isRegRequest = (
 	request: Common<unknown>
@@ -25,8 +21,5 @@ export const isAddShipsRequest = (
 
 export const isAttackRequest = (
 	request: Common<unknown>
-): request is AttackRequest => request.type === 'attack';
-
-export const isRandomAttackRequest = (
-	request: Common<unknown>
-): request is RandomAttackRequest => request.type === 'randomAttack';
+): request is AttackRequest =>
+	request.type === 'attack' || request.type === 'randomAttack';
