@@ -7,6 +7,7 @@ import stringifyData from '../utils/stringifyData.ts';
 import checkAttack from '../utils/checkAttack.ts';
 import getRandom from '../utils/getRandom.ts';
 import createStatus from '../utils/createStatus.ts';
+import getAttackResponse from '../utils/getAttackResponse.ts';
 import type { Attack, Player } from '../types/game.ts';
 
 export const createGame = (indexRoom: string | number): void => {
@@ -95,21 +96,15 @@ export const attack = ({
 
 	const position = { x, y };
 
-	const status = checkAttack(indexPlayer, ships, position);
+	const attackResult = checkAttack(indexPlayer, ships, position);
 
-	const response = stringifyData({
-		id: 0,
-		type: 'attack',
-		data: {
-			position,
-			currentPlayer: indexPlayer,
-			status,
-		},
-	});
+	const responses = getAttackResponse(attackResult, position);
 
 	players.forEach(({ indexPlayer }) => {
 		const client = mapClients.get(mapKeys[indexPlayer])!;
-		client.send(response);
+		responses.forEach((response) => {
+			client.send(response);
+		});
 	});
 
 	turn(gameId);

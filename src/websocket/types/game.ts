@@ -17,6 +17,14 @@ export type Attack = {
 	indexPlayer: number | string;
 } & Partial<Position>;
 
+export type AttackResult = {
+	killed: boolean;
+	shot: boolean;
+	index: number;
+	direction: boolean;
+	currentPlayer: number | string;
+};
+
 export type AttackRequest = {
 	id: 0;
 	type: 'attack' | 'randomAttack';
