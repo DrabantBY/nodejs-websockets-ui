@@ -6,6 +6,7 @@ import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import checkAttack from '../utils/checkAttack.ts';
 import getRandom from '../utils/getRandom.ts';
+import createStatus from '../utils/createStatus.ts';
 import type { Attack, Player } from '../types/game.ts';
 
 export const createGame = (indexRoom: string | number): void => {
@@ -58,6 +59,8 @@ export const startGame = (player: Player): void => {
 
 	mapGames.set(gameId, game);
 
+	createStatus(player);
+
 	if (game.players.length !== 2) {
 		return;
 	}
@@ -92,7 +95,7 @@ export const attack = ({
 
 	const position = { x, y };
 
-	const status = checkAttack(ships, position);
+	const status = checkAttack(indexPlayer, ships, position);
 
 	const response = stringifyData({
 		id: 0,
