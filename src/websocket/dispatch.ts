@@ -34,8 +34,8 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 			case checkRequest.isAddToRoomRequest(request):
 				const { indexRoom } = request.data;
 				roomService.updateRoom(indexRoom, currentUser);
-				roomService.sendRoom();
 				gameService.createGame(indexRoom);
+				roomService.sendRoom();
 				break;
 
 			case checkRequest.isAddShipsRequest(request):
@@ -43,7 +43,10 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				break;
 
 			case checkRequest.isAttackRequest(request):
-				gameService.attack(request.data);
+				const winner = gameService.attack(request.data);
+				if (winner) {
+					winService(winner);
+				}
 				break;
 		}
 	});

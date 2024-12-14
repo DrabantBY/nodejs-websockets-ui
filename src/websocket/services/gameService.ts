@@ -55,7 +55,7 @@ export const turn = (...ids: (string | number)[]): void => {
 export const finish = (
 	winPlayer: string | number,
 	losePlayer: string | number
-): boolean => {
+): string | number => {
 	const isFinish = mapStates[winPlayer].every(({ broken }) => broken);
 
 	if (isFinish) {
@@ -72,7 +72,7 @@ export const finish = (
 		mapClients.get(mapKeys[losePlayer])?.send(response);
 	}
 
-	return isFinish;
+	return isFinish ? winPlayer : '';
 };
 
 export const startGame = (player: Player): void => {
@@ -115,7 +115,7 @@ export const attack = ({
 	indexPlayer,
 	x = getRandom(),
 	y = getRandom(),
-}: Attack): void => {
+}: Attack): string | number => {
 	const { players } = mapGames.get(gameId)!;
 
 	const { ships, indexPlayer: opponentId } = players.find(
@@ -136,5 +136,5 @@ export const attack = ({
 	});
 
 	turn(indexPlayer, opponentId);
-	finish(indexPlayer, opponentId);
+	return finish(indexPlayer, opponentId);
 };

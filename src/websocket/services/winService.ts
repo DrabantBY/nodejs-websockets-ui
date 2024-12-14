@@ -2,11 +2,17 @@ import mapUsers from '../db/users.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import sendAllClients from '../utils/sendAllClients.ts';
 
-const winService = (name?: string): void => {
-	if (name) {
-		const winner = mapUsers.get(name)!;
-		winner.wins += 1;
-		mapUsers.set(name, winner);
+const winService = (index?: string | number): void => {
+	if (index) {
+		const users = mapUsers.values();
+
+		for (const user of users) {
+			if (user.index === index) {
+				user.wins += 1;
+				mapUsers.set(user.name, user);
+				break;
+			}
+		}
 	}
 
 	const data = [...mapUsers.values()]
