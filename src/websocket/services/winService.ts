@@ -1,21 +1,19 @@
-import mapUsers from '../db/users.ts';
+import users from '../db/users.ts';
 import stringifyData from '../utils/stringifyData.ts';
-import sendAllClients from '../utils/sendAllClients.ts';
+import sendAll from '../utils/sendAll.ts';
 
 const winService = (index?: string | number): void => {
-	if (index) {
-		const users = mapUsers.values();
+	const userList = Object.values(users);
 
-		for (const user of users) {
+	if (index) {
+		for (const user of userList) {
 			if (user.index === index) {
-				user.wins += 1;
-				mapUsers.set(user.name, user);
-				break;
+				user.wins++;
 			}
 		}
 	}
 
-	const data = [...mapUsers.values()]
+	const data = userList
 		.map(({ name, wins }) => ({
 			name,
 			wins,
@@ -28,7 +26,7 @@ const winService = (index?: string | number): void => {
 		id: 0,
 	});
 
-	sendAllClients(response);
+	sendAll(response);
 };
 
 export default winService;

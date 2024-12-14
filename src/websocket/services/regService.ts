@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import mapUsers from '../db/users.ts';
+import users from '../db/users.ts';
 import websockets from '../db/websockets.ts';
 import pointers from '../db/pointers.ts';
 import stringifyData from '../utils/stringifyData.ts';
@@ -13,7 +13,7 @@ const regService = (
 ): void => {
 	const { name, password } = request.data;
 
-	const isUserExist = mapUsers.has(name);
+	const isUserExist = name in users;
 
 	if (!isUserExist) {
 		const index = v4();
@@ -27,7 +27,7 @@ const regService = (
 
 		pointers[index] = wsId;
 
-		mapUsers.set(name, user);
+		users[name] = user;
 
 		const data = {
 			name,
@@ -43,10 +43,10 @@ const regService = (
 		return;
 	}
 
-	const hasCorrectPassword = mapUsers.get(name)?.password === password;
+	const hasCorrectPassword = users[name]?.password === password;
 
 	if (hasCorrectPassword) {
-		const { index } = mapUsers.get(name)!;
+		const { index } = users[name];
 
 		const isAlreadyActive = pointers[index] in websockets;
 
