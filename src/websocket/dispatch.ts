@@ -2,7 +2,7 @@ import * as roomService from './services/roomService.ts';
 import * as gameService from './services/gameService.ts';
 import * as checkRequest from './utils/checkRequest.ts';
 import winService from './services/winService.ts';
-import regService from './services/regService.ts';
+import RegService from './services/RegService.ts';
 import parseRawData from './utils/parseRawData.ts';
 import websockets from './db/websockets.ts';
 import type { IncomingMessage } from 'node:http';
@@ -20,7 +20,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 
 		switch (true) {
 			case checkRequest.isRegRequest(request):
-				regService(ws, request, key);
+				RegService.login(request.data, key);
 				currentUser = request.data.name;
 				roomService.sendRoom();
 				winService();

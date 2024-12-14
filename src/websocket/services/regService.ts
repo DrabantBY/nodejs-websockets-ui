@@ -3,84 +3,82 @@ import users from '../db/users.ts';
 import websockets from '../db/websockets.ts';
 import pointers from '../db/pointers.ts';
 import stringifyData from '../utils/stringifyData.ts';
-import type WebSocket from 'ws';
-import type { LoginRequest } from '../types/user.ts';
+import type { Login, Reg } from '../types/login.ts';
 
-const regService = (
-	ws: WebSocket,
-	request: LoginRequest,
-	wsId: string
-): void => {
-	const { name, password } = request.data;
+export default class RegService {
+	static #relayData(data: Reg, key: string) {
+		const res = stringifyData({ id: 0, type: 'reg', data });
+		websockets[key].send(res);
+	}
 
-	const isUserExist = name in users;
-
-	if (!isUserExist) {
+	static #createUser(name: string, password: string, key: string): void {
 		const index = v4();
 
-		const user = {
+		users[name] = {
 			name,
 			password,
 			index,
 			wins: 0,
 		};
 
-		pointers[index] = wsId;
+		pointers[index] = key;
 
-		users[name] = user;
-
-		const data = {
+		const data: Reg = {
 			name,
 			index,
-			error: isUserExist,
+			error: false,
 			errorText: '',
 		};
 
-		const response = stringifyData({ ...request, data });
-
-		ws.send(response);
-
-		return;
+		this.#relayData(data, key);
 	}
 
-	const hasCorrectPassword = users[name]?.password === password;
-
-	if (hasCorrectPassword) {
+	static #checkActiveUser(name: string, key: string): void {
 		const { index } = users[name];
 
-		const isAlreadyActive = pointers[index] in websockets;
+		const isActive = pointers[index] in websockets;
 
-		if (!isAlreadyActive) {
-			pointers[index] = wsId;
+		if (!isActive) {
+			pointers[index] = key;
 		}
 
-		const data = {
+		const data: Reg = {
 			name,
 			index,
-			error: isAlreadyActive,
-			errorText: isAlreadyActive
+			error: isActive,
+			errorText: isActive
 				? 'User is already active on another page. Please close that page first.'
 				: '',
 		};
 
-		const response = stringifyData({ ...request, data });
-
-		ws.send(response);
-
-		return;
+		this.#relayData(data, key);
 	}
 
-	const data = {
-		name,
-		index: '',
-		error: isUserExist,
-		errorText:
-			'User already exists. Please enter other user name or correct password.',
-	};
+	static login(login: Login, key: string): void {
+		const { name, password } = login;
 
-	const response = stringifyData({ ...request, data });
+		const isUserExist = name in users;
 
-	ws.send(response);
-};
+		if (!isUserExist) {
+			this.#createUser(name, password, key);
+			return;
+		}
 
-export default regService;
+		const correctLogin = users[name]?.password === password;
+
+		if (correctLogin) {
+			this.#checkActiveUser(name, key);
+			return;
+		}
+
+		const data: Reg = {
+			name,
+			index: '',
+			error: isUserExist,
+			errorText:
+				'User already exists. Please enter other user name or correct password.',
+		};
+
+		this.#relayData(data, key);
+	}
+}

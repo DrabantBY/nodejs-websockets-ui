@@ -1,5 +1,5 @@
 import type { Common } from '../types/common.ts';
-import type { LoginRequest } from '../types/user.ts';
+import type { LoginRequest } from '../types/login.ts';
 import type { AddToRoomRequest, CreateRoomRequest } from '../types/room.ts';
 import type { AddShipsRequest, AttackRequest } from '../types/game.ts';
 

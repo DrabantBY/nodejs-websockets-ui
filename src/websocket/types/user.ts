@@ -1,13 +1,6 @@
-import type { Common } from './common.ts';
-
-export type Login = {
+export interface User {
 	name: string;
 	password: string;
-};
-
-export type LoginRequest = Common<Login>;
-
-export type User = Login & {
 	index: string | number;
 	wins: number;
-};
+}
