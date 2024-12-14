@@ -1,9 +1,9 @@
-import states from '../db/states.ts';
+import mapStates from '../db/states.ts';
 import type { Player } from '../types/game.ts';
 
 const createStatus = ({ indexPlayer, ships }: Player): void => {
-	const statuses = ships.map((_) => ({ broken: false, hits: [] }));
-	states[indexPlayer] = statuses;
+	const states = ships.map((_) => ({ broken: false, hits: [] }));
+	mapStates[indexPlayer] = states;
 };
 
 export default createStatus;

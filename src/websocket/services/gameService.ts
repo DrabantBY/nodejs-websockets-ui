@@ -1,6 +1,7 @@
 import { v4 } from 'uuid';
 import mapRooms from '../db/rooms.ts';
 import mapGames from '../db/games.ts';
+import mapStates from '../db/states.ts';
 import mapKeys from '../db/keys.ts';
 import mapClients from '../db/clients.ts';
 import stringifyData from '../utils/stringifyData.ts';
@@ -39,16 +40,39 @@ export const createGame = (indexRoom: string | number): void => {
 	mapRooms.delete(indexRoom);
 };
 
-export const turn = (gameId: string | number): void => {
-	mapGames.get(gameId)?.players.forEach(({ indexPlayer }) => {
+export const turn = (...ids: (string | number)[]): void => {
+	ids.forEach((currentPlayer) => {
 		const response = stringifyData({
 			id: 0,
 			type: 'turn',
-			data: { currentPlayer: indexPlayer },
+			data: { currentPlayer },
 		});
 
-		mapClients.get(mapKeys[indexPlayer])?.send(response);
+		mapClients.get(mapKeys[currentPlayer])?.send(response);
 	});
+};
+
+export const finish = (
+	winPlayer: string | number,
+	losePlayer: string | number
+): boolean => {
+	const isFinish = mapStates[winPlayer].every(({ broken }) => broken);
+
+	if (isFinish) {
+		const response = stringifyData({
+			id: 0,
+			type: 'finish',
+			data: {
+				winPlayer,
+			},
+		});
+
+		mapClients.get(mapKeys[winPlayer])?.send(response);
+
+		mapClients.get(mapKeys[losePlayer])?.send(response);
+	}
+
+	return isFinish;
 };
 
 export const startGame = (player: Player): void => {
@@ -66,7 +90,11 @@ export const startGame = (player: Player): void => {
 		return;
 	}
 
+	const ids: (string | number)[] = [];
+
 	game.players.forEach(({ ships, indexPlayer }) => {
+		ids.push(indexPlayer);
+
 		const response = stringifyData({
 			id: 0,
 			type: 'start_game',
@@ -79,7 +107,7 @@ export const startGame = (player: Player): void => {
 		mapClients.get(mapKeys[indexPlayer])?.send(response);
 	});
 
-	turn(gameId);
+	turn(...ids);
 };
 
 export const attack = ({
@@ -90,7 +118,7 @@ export const attack = ({
 }: Attack): void => {
 	const { players } = mapGames.get(gameId)!;
 
-	const { ships } = players.find(
+	const { ships, indexPlayer: opponentId } = players.find(
 		(player) => player.indexPlayer !== indexPlayer
 	)!;
 
@@ -107,5 +135,6 @@ export const attack = ({
 		});
 	});
 
-	turn(gameId);
+	turn(indexPlayer, opponentId);
+	finish(indexPlayer, opponentId);
 };

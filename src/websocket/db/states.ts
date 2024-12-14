@@ -1,5 +1,5 @@
-import type { Status } from '../types/status.ts';
+import type { State } from '../types/state.ts';
 
-const states: Record<string, Status[]> = {};
+const mapStates: Record<string, State[]> = {};
 
-export default states;
+export default mapStates;

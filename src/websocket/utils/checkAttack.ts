@@ -1,4 +1,4 @@
-import states from '../db/states.ts';
+import mapStates from '../db/states.ts';
 import type { AttackResult, Position, Ship } from '../types/game.ts';
 
 const checkAttack = (
@@ -30,14 +30,14 @@ const checkAttack = (
 
 		if (result.shot) {
 			const hit = direction ? y : x;
-			const hasHit = states[playerId][i].hits.includes(hit);
+			const hasHit = mapStates[playerId][i].hits.includes(hit);
 
 			if (!hasHit) {
-				states[playerId][i].hits.push(hit);
+				mapStates[playerId][i].hits.push(hit);
 			}
 
-			result.killed = states[playerId][i].hits.length === length;
-			states[playerId][i].broken = result.killed;
+			result.killed = mapStates[playerId][i].hits.length === length;
+			mapStates[playerId][i].broken = result.killed;
 
 			break;
 		}

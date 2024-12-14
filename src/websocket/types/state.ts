@@ -1,4 +1,4 @@
-export type Status = {
+export type State = {
 	broken: boolean;
 	hits: number[];
 };
