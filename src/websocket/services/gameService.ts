@@ -2,7 +2,7 @@ import { v4 } from 'uuid';
 import mapRooms from '../db/rooms.ts';
 import mapGames from '../db/games.ts';
 import mapStates from '../db/states.ts';
-import mapKeys from '../db/keys.ts';
+import pointers from '../db/pointers.ts';
 import websockets from '../db/websockets.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import checkAttack from '../utils/checkAttack.ts';
@@ -34,7 +34,7 @@ export const createGame = (indexRoom: string | number): void => {
 			},
 		});
 
-		websockets[mapKeys[index]]?.send(response);
+		websockets[pointers[index]]?.send(response);
 	});
 
 	mapRooms.delete(indexRoom);
@@ -48,7 +48,7 @@ export const turn = (...ids: (string | number)[]): void => {
 			data: { currentPlayer },
 		});
 
-		websockets[mapKeys[currentPlayer]]?.send(response);
+		websockets[pointers[currentPlayer]]?.send(response);
 	});
 };
 
@@ -67,9 +67,9 @@ export const finish = (
 			},
 		});
 
-		websockets[mapKeys[winPlayer]]?.send(response);
+		websockets[pointers[winPlayer]]?.send(response);
 
-		websockets[mapKeys[losePlayer]]?.send(response);
+		websockets[pointers[losePlayer]]?.send(response);
 	}
 
 	return isFinish ? winPlayer : '';
@@ -104,7 +104,7 @@ export const startGame = (player: Player): void => {
 			},
 		});
 
-		websockets[mapKeys[indexPlayer]]?.send(response);
+		websockets[pointers[indexPlayer]]?.send(response);
 	});
 
 	turn(...ids);
@@ -130,7 +130,7 @@ export const attack = ({
 
 	players.forEach(({ indexPlayer }) => {
 		responses.forEach((response) => {
-			websockets[mapKeys[indexPlayer]].send(response);
+			websockets[pointers[indexPlayer]].send(response);
 		});
 	});
 
