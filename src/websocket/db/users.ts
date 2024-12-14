@@ -5,7 +5,6 @@ const users: Record<string, User> = {
 		name: 'bot',
 		password: 'bot',
 		index: 'bot',
-		wins: 0,
 	},
 };
 

@@ -1,7 +1,7 @@
 import * as roomService from './services/roomService.ts';
 import * as gameService from './services/gameService.ts';
 import * as checkRequest from './utils/checkRequest.ts';
-import winService from './services/winService.ts';
+import WinnerService from './services/WinnerService.ts';
 import RegService from './services/RegService.ts';
 import parseRawData from './utils/parseRawData.ts';
 import websockets from './db/websockets.ts';
@@ -23,7 +23,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				RegService.login(request.data, key);
 				currentUser = request.data.name;
 				roomService.sendRoom();
-				winService();
+				WinnerService.sendWinners();
 				break;
 
 			case checkRequest.isCreateRoomRequest(request):
@@ -45,7 +45,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 			case checkRequest.isAttackRequest(request):
 				const winner = gameService.attack(request.data);
 				if (winner) {
-					winService(winner);
+					WinnerService.updateWinners(winner);
 				}
 				break;
 		}

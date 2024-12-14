@@ -6,7 +6,7 @@ import stringifyData from '../utils/stringifyData.ts';
 import type { Login, Reg } from '../types/login.ts';
 
 export default class RegService {
-	static #relayData(data: Reg, key: string) {
+	static #relayData(data: Reg, key: string): void {
 		const res = stringifyData({ id: 0, type: 'reg', data });
 		websockets[key].send(res);
 	}
@@ -18,7 +18,6 @@ export default class RegService {
 			name,
 			password,
 			index,
-			wins: 0,
 		};
 
 		pointers[index] = key;
