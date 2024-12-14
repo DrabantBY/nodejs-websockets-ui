@@ -4,7 +4,7 @@ import * as checkRequest from './utils/checkRequest.ts';
 import winService from './services/winService.ts';
 import regService from './services/regService.ts';
 import parseRawData from './utils/parseRawData.ts';
-import mapClients from './db/clients.ts';
+import websockets from './db/websockets.ts';
 import type { IncomingMessage } from 'node:http';
 import type WebSocket from 'ws';
 
@@ -13,7 +13,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 
 	const key = req.headers['sec-websocket-key']!;
 
-	mapClients.set(key, ws);
+	websockets[key] = ws;
 
 	ws.on('message', (rawData) => {
 		const request = parseRawData(rawData);
@@ -52,6 +52,6 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 	});
 
 	ws.on('close', () => {
-		mapClients.delete(key);
+		delete websockets[key];
 	});
 }

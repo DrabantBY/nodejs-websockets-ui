@@ -1,13 +1,12 @@
-import mapClients from '../db/clients.ts';
+import websockets from '../db/websockets.ts';
 import mapKeys from '../db/keys.ts';
 import mapUsers from '../db/users.ts';
 
 const sendAllClients = (response: string) => {
-	const users = mapUsers.values();
+	const userIterator = mapUsers.values();
 
-	for (const user of users) {
-		const client = mapClients.get(mapKeys[user.index]);
-		client?.send(response);
+	for (const user of userIterator) {
+		websockets[mapKeys[user.index]]?.send(response);
 	}
 };
 

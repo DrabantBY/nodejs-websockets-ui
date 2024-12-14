@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import mapUsers from '../db/users.ts';
-import mapClients from '../db/clients.ts';
+import websockets from '../db/websockets.ts';
 import mapKeys from '../db/keys.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import type WebSocket from 'ws';
@@ -48,7 +48,7 @@ const regService = (
 	if (hasCorrectPassword) {
 		const { index } = mapUsers.get(name)!;
 
-		const isAlreadyActive = mapClients.has(mapKeys[index]);
+		const isAlreadyActive = mapKeys[index] in websockets;
 
 		if (!isAlreadyActive) {
 			mapKeys[index] = wsId;

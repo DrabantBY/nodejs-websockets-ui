@@ -3,7 +3,7 @@ import mapRooms from '../db/rooms.ts';
 import mapGames from '../db/games.ts';
 import mapStates from '../db/states.ts';
 import mapKeys from '../db/keys.ts';
-import mapClients from '../db/clients.ts';
+import websockets from '../db/websockets.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import checkAttack from '../utils/checkAttack.ts';
 import getRandom from '../utils/getRandom.ts';
@@ -34,7 +34,7 @@ export const createGame = (indexRoom: string | number): void => {
 			},
 		});
 
-		mapClients.get(mapKeys[index])?.send(response);
+		websockets[mapKeys[index]]?.send(response);
 	});
 
 	mapRooms.delete(indexRoom);
@@ -48,7 +48,7 @@ export const turn = (...ids: (string | number)[]): void => {
 			data: { currentPlayer },
 		});
 
-		mapClients.get(mapKeys[currentPlayer])?.send(response);
+		websockets[mapKeys[currentPlayer]]?.send(response);
 	});
 };
 
@@ -67,9 +67,9 @@ export const finish = (
 			},
 		});
 
-		mapClients.get(mapKeys[winPlayer])?.send(response);
+		websockets[mapKeys[winPlayer]]?.send(response);
 
-		mapClients.get(mapKeys[losePlayer])?.send(response);
+		websockets[mapKeys[losePlayer]]?.send(response);
 	}
 
 	return isFinish ? winPlayer : '';
@@ -104,7 +104,7 @@ export const startGame = (player: Player): void => {
 			},
 		});
 
-		mapClients.get(mapKeys[indexPlayer])?.send(response);
+		websockets[mapKeys[indexPlayer]]?.send(response);
 	});
 
 	turn(...ids);
@@ -129,9 +129,8 @@ export const attack = ({
 	const responses = getAttackResponse(attackResult, position);
 
 	players.forEach(({ indexPlayer }) => {
-		const client = mapClients.get(mapKeys[indexPlayer])!;
 		responses.forEach((response) => {
-			client.send(response);
+			websockets[mapKeys[indexPlayer]].send(response);
 		});
 	});
 
