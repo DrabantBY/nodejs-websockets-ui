@@ -1,13 +1,13 @@
 import { v4 } from 'uuid';
 import users from '../db/users.ts';
 import sendResponse from '../utils/sendResponse.ts';
-import type { Room } from '../types/room.ts';
+import type { Room } from '../types/game.ts';
 
 export default class RoomService {
-	static #rooms: Record<string | number, Room> = {};
+	private static rooms: Record<string | number, Room> = {};
 
 	static sendRooms(): void {
-		const data = Object.values(this.#rooms);
+		const data = Object.values(this.rooms);
 
 		sendResponse('update_room', data);
 	}
@@ -17,12 +17,12 @@ export default class RoomService {
 		const { index } = users[name];
 		const roomUsers = [{ name, index }];
 		const room = { roomId, roomUsers };
-		this.#rooms[roomId] = room;
+		this.rooms[roomId] = room;
 		this.sendRooms();
 	}
 
 	static updateRoom(roomId: string | number, name: string): void {
-		const { roomUsers } = this.#rooms[roomId];
+		const { roomUsers } = this.rooms[roomId];
 
 		if (roomUsers.some((user) => user.name === name)) {
 			return;
@@ -34,15 +34,15 @@ export default class RoomService {
 	}
 
 	static deleteRoom(roomId: string | number) {
-		if (this.#rooms[roomId].roomUsers.length < 2) {
+		if (this.rooms[roomId].roomUsers.length < 2) {
 			return;
 		}
 
-		delete this.#rooms[roomId];
+		delete this.rooms[roomId];
 		this.sendRooms();
 	}
 
 	static getRoomById(roomId: string | number): Room {
-		return this.#rooms[roomId];
+		return this.rooms[roomId];
 	}
 }

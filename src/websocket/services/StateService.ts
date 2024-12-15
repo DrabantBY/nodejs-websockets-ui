@@ -19,13 +19,13 @@ export default class StateService {
 
 	protected static updateState(
 		currentPlayer: string | number,
-		attackPosition: Position,
+		position: Position,
 		ship: Ship,
 		index: number
-	): StatusData {
+	): StatusData[] {
 		const shipState = this.states[currentPlayer][index];
 
-		const hit = ship.direction ? attackPosition.y : attackPosition.x;
+		const hit = ship.direction ? position.y : position.x;
 
 		if (!shipState.hits.includes(hit)) {
 			shipState.hits.push(hit);
@@ -33,24 +33,104 @@ export default class StateService {
 
 		shipState.broken = shipState.hits.length === ship.length;
 
-		const position: Position[] = shipState.broken
-			? shipState.hits.map((hit) =>
-					ship.direction
-						? { x: attackPosition.x, y: hit }
-						: { x: hit, y: attackPosition.y }
-			  )
-			: [attackPosition];
+		if (shipState.broken) {
+			const brokenStatuses = this.getBrokenSpace(
+				currentPlayer,
+				shipState.hits,
+				ship.direction,
+				position
+			);
 
-		const status = shipState.broken ? 'killed' : 'shot';
+			const missedStatuses = this.getMissedSpace(
+				currentPlayer,
+				shipState.hits,
+				ship.direction,
+				position
+			);
 
-		return {
-			position,
-			currentPlayer,
-			status,
-		};
+			return brokenStatuses.concat(missedStatuses);
+		}
+
+		return [
+			{
+				position,
+				currentPlayer,
+				status: 'shot',
+			},
+		];
 	}
 
 	protected static checkShipListBroken(id: string | number): boolean {
 		return this.states[id].every(({ broken }) => broken);
+	}
+
+	protected static getBrokenSpace(
+		currentPlayer: string | number,
+		hits: number[],
+		direction: boolean,
+		position: Position
+	): StatusData[] {
+		return hits.map((hit) => ({
+			position: direction
+				? { x: position.x, y: hit }
+				: { x: hit, y: position.y },
+			currentPlayer,
+			status: 'killed',
+		}));
+	}
+
+	protected static getMissedSpace(
+		currentPlayer: string | number,
+		hits: number[],
+		direction: boolean,
+		{ x, y }: Position
+	): StatusData[] {
+		const positions: Position[] = [];
+
+		const sortedHits = hits.toSorted();
+
+		for (let i = 0; i < sortedHits.length; i++) {
+			if (direction) {
+				positions.push({ x: x - 1, y: sortedHits[i] });
+				positions.push({ x: x + 1, y: sortedHits[i] });
+
+				if (i === 0) {
+					positions.push({ x, y: sortedHits[i] - 1 });
+					positions.push({ x: x - 1, y: sortedHits[i] - 1 });
+					positions.push({ x: x + 1, y: sortedHits[i] - 1 });
+				}
+
+				if (i === sortedHits.length - 1) {
+					positions.push({ x, y: sortedHits[i] + 1 });
+					positions.push({ x: x - 1, y: sortedHits[i] + 1 });
+					positions.push({ x: x + 1, y: sortedHits[i] + 1 });
+				}
+			} else {
+				positions.push({ x: sortedHits[i], y: y - 1 });
+				positions.push({ x: sortedHits[i], y: y + 1 });
+
+				if (i === 0) {
+					positions.push({ x: sortedHits[i] - 1, y });
+					positions.push({ x: sortedHits[i] - 1, y: y - 1 });
+					positions.push({ x: sortedHits[i] - 1, y: y + 1 });
+				}
+
+				if (i === sortedHits.length - 1) {
+					positions.push({ x: sortedHits[i] + 1, y });
+					positions.push({ x: sortedHits[i] + 1, y: y - 1 });
+					positions.push({ x: sortedHits[i] + 1, y: y + 1 });
+				}
+			}
+		}
+
+		const filteredPositions = positions.filter(
+			({ x, y }) => x >= 0 && x < 10 && y >= 0 && y < 10
+		);
+
+		return filteredPositions.map((position) => ({
+			position,
+			currentPlayer,
+			status: 'miss',
+		}));
 	}
 }

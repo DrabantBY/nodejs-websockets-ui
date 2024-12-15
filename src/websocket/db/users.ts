@@ -1,4 +1,8 @@
-import type { User } from '../types/user.ts';
+export interface User {
+	name: string;
+	password: string;
+	index: string | number;
+}
 
 const users: Record<string, User> = {
 	bot: {

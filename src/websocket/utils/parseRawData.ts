@@ -1,5 +1,5 @@
 import type { RawData } from 'ws';
-import type { Common } from '../types/common.ts';
+import type { Common } from '../types/requests.ts';
 
 const parseRawData = <T>(rawData: RawData): Common<T> => {
 	const text = rawData.toString();

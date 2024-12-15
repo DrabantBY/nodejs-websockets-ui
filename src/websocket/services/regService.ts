@@ -3,15 +3,15 @@ import users from '../db/users.ts';
 import websockets from '../db/websockets.ts';
 import pointers from '../db/pointers.ts';
 import stringifyData from '../utils/stringifyData.ts';
-import type { Login, Reg } from '../types/login.ts';
+import type { Reg, Login } from '../types/game.ts';
 
 export default class RegService {
-	static #relayData(data: Reg, key: string): void {
+	private static relayData(data: Reg, key: string): void {
 		const res = stringifyData({ id: 0, type: 'reg', data });
 		websockets[key].send(res);
 	}
 
-	static #createUser(name: string, password: string, key: string): void {
+	private static createUser(name: string, password: string, key: string): void {
 		const index = v4();
 
 		users[name] = {
@@ -29,10 +29,10 @@ export default class RegService {
 			errorText: '',
 		};
 
-		this.#relayData(data, key);
+		this.relayData(data, key);
 	}
 
-	static #checkActiveUser(name: string, key: string): void {
+	private static checkActiveUser(name: string, key: string): void {
 		const { index } = users[name];
 
 		const isActive = pointers[index] in websockets;
@@ -50,7 +50,7 @@ export default class RegService {
 				: '',
 		};
 
-		this.#relayData(data, key);
+		this.relayData(data, key);
 	}
 
 	static login(login: Login, key: string): void {
@@ -59,14 +59,14 @@ export default class RegService {
 		const isUserExist = name in users;
 
 		if (!isUserExist) {
-			this.#createUser(name, password, key);
+			this.createUser(name, password, key);
 			return;
 		}
 
 		const correctLogin = users[name]?.password === password;
 
 		if (correctLogin) {
-			this.#checkActiveUser(name, key);
+			this.checkActiveUser(name, key);
 			return;
 		}
 
@@ -78,6 +78,6 @@ export default class RegService {
 				'User already exists. Please enter other user name or correct password.',
 		};
 
-		this.#relayData(data, key);
+		this.relayData(data, key);
 	}
 }

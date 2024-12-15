@@ -8,9 +8,8 @@ import type {
 	Player,
 	Position,
 	Ship,
+	Room,
 } from '../types/game.ts';
-
-import type { Room } from '../types/room.ts';
 
 export default class GameService extends StateService {
 	private static games: Record<string | number, Player[]> = {};
@@ -51,7 +50,7 @@ export default class GameService extends StateService {
 		currentPlayer: string | number,
 		ships: Ship[],
 		position: Position
-	): StatusData {
+	): StatusData[] {
 		for (let i = 0; i < ships.length; i++) {
 			const isAttackSuccess = this.checkIsAttackSuccess(position, ships[i]);
 
@@ -60,11 +59,13 @@ export default class GameService extends StateService {
 			}
 		}
 
-		return {
-			position: [position],
-			currentPlayer,
-			status: 'miss',
-		};
+		return [
+			{
+				position,
+				currentPlayer,
+				status: 'miss',
+			},
+		];
 	}
 
 	static createGame({ roomId, roomUsers }: Room): void {
@@ -125,12 +126,10 @@ export default class GameService extends StateService {
 
 		const position = { x, y };
 
-		const status = this.getAttackStatus(indexPlayer, ships, position);
+		const dataList = this.getAttackStatus(indexPlayer, ships, position);
 
 		players.forEach(({ indexPlayer }) => {
-			status.position.forEach((position) => {
-				const data = { ...status, position };
-
+			dataList.forEach((data) => {
 				sendResponse('attack', data, [indexPlayer]);
 			});
 		});

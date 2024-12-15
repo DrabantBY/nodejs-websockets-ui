@@ -16,15 +16,9 @@ export type Attack = {
 } & Partial<Position>;
 
 export type StatusData = {
-	position: Position[];
+	position: Position;
 	currentPlayer: number | string;
 	status: 'miss' | 'shot' | 'killed';
-};
-
-export type AttackRequest = {
-	id: 0;
-	type: 'attack' | 'randomAttack';
-	data: Attack;
 };
 
 export type Player = {
@@ -33,13 +27,27 @@ export type Player = {
 	ships: Ship[];
 };
 
-export type AddShipsRequest = {
-	id: 0;
-	type: 'add_ships';
-	data: Player;
-};
-
 export type Game = {
 	gameId: number | string;
 	players: Player[];
 };
+
+export type Room = {
+	roomId: number | string;
+	roomUsers: {
+		name: string;
+		index: string | number;
+	}[];
+};
+
+export interface Login {
+	name: string;
+	password: string;
+}
+
+export interface Reg {
+	name: string;
+	index: string | number;
+	error: boolean;
+	errorText: string;
+}

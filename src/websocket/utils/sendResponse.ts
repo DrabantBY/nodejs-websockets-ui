@@ -2,7 +2,7 @@ import websockets from '../db/websockets.ts';
 import stringifyData from './stringifyData.ts';
 import pointers from '../db/pointers.ts';
 import users from '../db/users.ts';
-import type { QueryTypes } from '../types/common.ts';
+import type { QueryTypes } from '../types/requests.ts';
 
 const sendResponse = (
 	type: QueryTypes,
