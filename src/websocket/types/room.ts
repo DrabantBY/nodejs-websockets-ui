@@ -1,6 +1,6 @@
 import type { Common } from './common.ts';
 
-type RoomUser = {
+export type RoomUser = {
 	name: string;
 	index: string | number;
 };

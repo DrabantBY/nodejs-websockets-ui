@@ -1,5 +1,3 @@
-import { v4 } from 'uuid';
-import mapRooms from '../db/rooms.ts';
 import mapGames from '../db/games.ts';
 import mapStates from '../db/states.ts';
 import pointers from '../db/pointers.ts';
@@ -10,15 +8,14 @@ import getRandom from '../utils/getRandom.ts';
 import createStatus from '../utils/createStatus.ts';
 import getAttackResponse from '../utils/getAttackResponse.ts';
 import type { Attack, Player } from '../types/game.ts';
+import type { Room } from '../types/room.ts';
 
-export const createGame = (indexRoom: string | number): void => {
-	const { roomUsers } = mapRooms.get(indexRoom)!;
-
+export const createGame = ({ roomId, roomUsers }: Room): void => {
 	if (roomUsers.length !== 2) {
 		return;
 	}
 
-	const idGame = v4();
+	const idGame = roomId;
 	const gameId = idGame;
 	const players: Player[] = [];
 
@@ -36,8 +33,6 @@ export const createGame = (indexRoom: string | number): void => {
 
 		websockets[pointers[index]]?.send(response);
 	});
-
-	mapRooms.delete(indexRoom);
 };
 
 export const turn = (...ids: (string | number)[]): void => {

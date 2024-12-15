@@ -1,4 +1,3 @@
-import users from '../db/users.ts';
 import stringifyData from '../utils/stringifyData.ts';
 import sendAll from '../utils/sendAll.ts';
 

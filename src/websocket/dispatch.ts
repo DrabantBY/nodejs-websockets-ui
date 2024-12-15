@@ -1,6 +1,6 @@
-import * as roomService from './services/roomService.ts';
 import * as gameService from './services/gameService.ts';
 import * as checkRequest from './utils/checkRequest.ts';
+import RoomService from './services/RoomService.ts';
 import WinnerService from './services/WinnerService.ts';
 import RegService from './services/RegService.ts';
 import parseRawData from './utils/parseRawData.ts';
@@ -22,20 +22,20 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 			case checkRequest.isRegRequest(request):
 				RegService.login(request.data, key);
 				currentUser = request.data.name;
-				roomService.sendRoom();
+				RoomService.sendRooms();
 				WinnerService.sendWinners();
 				break;
 
 			case checkRequest.isCreateRoomRequest(request):
-				roomService.createRoom(currentUser);
-				roomService.sendRoom();
+				RoomService.createRoom(currentUser);
 				break;
 
 			case checkRequest.isAddToRoomRequest(request):
 				const { indexRoom } = request.data;
-				roomService.updateRoom(indexRoom, currentUser);
-				gameService.createGame(indexRoom);
-				roomService.sendRoom();
+				RoomService.updateRoom(indexRoom, currentUser);
+				const room = RoomService.getRoomById(indexRoom);
+				gameService.createGame(room);
+				RoomService.deleteRoom(indexRoom);
 				break;
 
 			case checkRequest.isAddShipsRequest(request):
