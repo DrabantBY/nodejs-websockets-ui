@@ -55,7 +55,7 @@ export const turn = (...ids: (string | number)[]): void => {
 export const finish = (
 	winPlayer: string | number,
 	losePlayer: string | number
-): string | number => {
+): boolean => {
 	const isFinish = mapStates[winPlayer].every(({ broken }) => broken);
 
 	if (isFinish) {
@@ -72,7 +72,7 @@ export const finish = (
 		websockets[pointers[losePlayer]]?.send(response);
 	}
 
-	return isFinish ? winPlayer : '';
+	return isFinish;
 };
 
 export const startGame = (player: Player): void => {
@@ -115,7 +115,7 @@ export const attack = ({
 	indexPlayer,
 	x = getRandom(),
 	y = getRandom(),
-}: Attack): string | number => {
+}: Attack): boolean => {
 	const { players } = mapGames.get(gameId)!;
 
 	const { ships, indexPlayer: opponentId } = players.find(

@@ -9,7 +9,7 @@ import type { IncomingMessage } from 'node:http';
 import type WebSocket from 'ws';
 
 export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
-	let currentUser!: string;
+	let currentUser: string;
 
 	const key = req.headers['sec-websocket-key']!;
 
@@ -43,9 +43,9 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				break;
 
 			case checkRequest.isAttackRequest(request):
-				const winner = gameService.attack(request.data);
-				if (winner) {
-					WinnerService.updateWinners(winner);
+				const isWin = gameService.attack(request.data);
+				if (isWin) {
+					WinnerService.updateWinners(currentUser);
 				}
 				break;
 		}

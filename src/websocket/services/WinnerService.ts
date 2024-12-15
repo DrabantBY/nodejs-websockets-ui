@@ -20,19 +20,13 @@ export default class WinnerService {
 		sendAll(response);
 	}
 
-	static updateWinners(index: string | number): void {
-		const user = Object.values(users).find((user) => user.index === index);
-
-		if (!user) {
-			return;
-		}
-
-		const winner = this.#winners.find(({ name }) => name === user.name);
+	static updateWinners(name: string): void {
+		const winner = this.#winners.find((w) => w.name === name);
 
 		if (winner) {
 			winner.wins++;
 		} else {
-			this.#winners.push({ name: user.name, wins: 1 });
+			this.#winners.push({ name, wins: 1 });
 		}
 
 		this.sendWinners();
