@@ -1,5 +1,4 @@
-import stringifyData from '../utils/stringifyData.ts';
-import sendAll from '../utils/sendAll.ts';
+import sendResponse from '../utils/sendResponse.ts';
 
 interface Winner {
 	name: string;
@@ -10,13 +9,7 @@ export default class WinnerService {
 	static #winners: Winner[] = [];
 
 	static sendWinners(): void {
-		const response = stringifyData({
-			type: 'update_winners',
-			data: this.#winners,
-			id: 0,
-		});
-
-		sendAll(response);
+		sendResponse('update_winners', this.#winners);
 	}
 
 	static updateWinners(name: string): void {

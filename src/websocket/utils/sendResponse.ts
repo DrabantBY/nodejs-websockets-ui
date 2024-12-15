@@ -6,7 +6,7 @@ import type { QueryTypes } from '../types/common.ts';
 
 const sendResponse = (
 	type: QueryTypes,
-	data: any,
+	data: unknown,
 	ids?: (string | number)[]
 ): void => {
 	const response = stringifyData({

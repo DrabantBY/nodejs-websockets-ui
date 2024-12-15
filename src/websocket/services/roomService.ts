@@ -1,7 +1,6 @@
 import { v4 } from 'uuid';
 import users from '../db/users.ts';
-import stringifyData from '../utils/stringifyData.ts';
-import sendAll from '../utils/sendAll.ts';
+import sendResponse from '../utils/sendResponse.ts';
 import type { Room } from '../types/room.ts';
 
 export default class RoomService {
@@ -10,13 +9,7 @@ export default class RoomService {
 	static sendRooms(): void {
 		const data = Object.values(this.#rooms);
 
-		const response = stringifyData({
-			id: 0,
-			type: 'update_room',
-			data,
-		});
-
-		sendAll(response);
+		sendResponse('update_room', data);
 	}
 
 	static createRoom(name: string): void {

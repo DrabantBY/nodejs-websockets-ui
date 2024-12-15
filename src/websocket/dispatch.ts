@@ -1,5 +1,5 @@
-import * as gameService from './services/gameService.ts';
 import * as checkRequest from './utils/checkRequest.ts';
+import GameService from './services/GameService.ts';
 import RoomService from './services/RoomService.ts';
 import WinnerService from './services/WinnerService.ts';
 import RegService from './services/RegService.ts';
@@ -34,16 +34,16 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				const { indexRoom } = request.data;
 				RoomService.updateRoom(indexRoom, currentUser);
 				const room = RoomService.getRoomById(indexRoom);
-				gameService.createGame(room);
+				GameService.createGame(room);
 				RoomService.deleteRoom(indexRoom);
 				break;
 
 			case checkRequest.isAddShipsRequest(request):
-				gameService.startGame(request.data);
+				GameService.startGame(request.data);
 				break;
 
 			case checkRequest.isAttackRequest(request):
-				const isWin = gameService.attack(request.data);
+				const isWin = GameService.attack(request.data);
 				if (isWin) {
 					WinnerService.updateWinners(currentUser);
 				}

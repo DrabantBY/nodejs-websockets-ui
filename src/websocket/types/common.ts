@@ -4,7 +4,7 @@ export type Common<T> = {
 	id: 0;
 };
 
-type QueryTypes =
+export type QueryTypes =
 	| 'reg'
 	| 'update_winners'
 	| 'create_room'

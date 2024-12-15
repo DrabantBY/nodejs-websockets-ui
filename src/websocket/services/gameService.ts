@@ -1,134 +1,141 @@
-import mapGames from '../db/games.ts';
-import mapStates from '../db/states.ts';
-import pointers from '../db/pointers.ts';
-import websockets from '../db/websockets.ts';
-import stringifyData from '../utils/stringifyData.ts';
-import checkAttack from '../utils/checkAttack.ts';
+import StateService from './StateService.ts';
+import sendResponse from '../utils/sendResponse.ts';
 import getRandom from '../utils/getRandom.ts';
-import createStatus from '../utils/createStatus.ts';
-import getAttackResponse from '../utils/getAttackResponse.ts';
-import type { Attack, Player } from '../types/game.ts';
+
+import type {
+	Attack,
+	StatusData,
+	Player,
+	Position,
+	Ship,
+} from '../types/game.ts';
+
 import type { Room } from '../types/room.ts';
 
-export const createGame = ({ roomId, roomUsers }: Room): void => {
-	if (roomUsers.length !== 2) {
-		return;
+export default class GameService extends StateService {
+	private static games: Record<string | number, Player[]> = {};
+
+	private static checkIsAttackSuccess(
+		attackPosition: Position,
+		{ direction, position, length }: Ship
+	): boolean {
+		return direction
+			? attackPosition.x === position.x &&
+					attackPosition.y >= position.y &&
+					attackPosition.y < position.y + length
+			: attackPosition.y === position.y &&
+					attackPosition.x >= position.x &&
+					attackPosition.x < position.x + length;
 	}
 
-	const idGame = roomId;
-	const gameId = idGame;
-	const players: Player[] = [];
+	private static turnGame(ids: (string | number)[]): void {
+		ids.forEach((currentPlayer) => {
+			sendResponse('turn', { currentPlayer }, [currentPlayer]);
+		});
+	}
 
-	mapGames.set(idGame, { gameId, players });
+	private static finishGame(
+		winPlayer: string | number,
+		losePlayer: string | number
+	): boolean {
+		const isFinish = this.checkShipListBroken(winPlayer);
 
-	roomUsers.forEach(({ index }) => {
-		const response = stringifyData({
-			id: 0,
-			type: 'create_game',
-			data: {
-				idGame,
+		if (isFinish) {
+			sendResponse('finish', { winPlayer }, [winPlayer, losePlayer]);
+		}
+
+		return isFinish;
+	}
+
+	private static getAttackStatus(
+		currentPlayer: string | number,
+		ships: Ship[],
+		position: Position
+	): StatusData {
+		for (let i = 0; i < ships.length; i++) {
+			const isAttackSuccess = this.checkIsAttackSuccess(position, ships[i]);
+
+			if (isAttackSuccess) {
+				return this.updateState(currentPlayer, position, ships[i], i);
+			}
+		}
+
+		return {
+			position: [position],
+			currentPlayer,
+			status: 'miss',
+		};
+	}
+
+	static createGame({ roomId, roomUsers }: Room): void {
+		if (roomUsers.length < 2) {
+			return;
+		}
+
+		this.games[roomId] = [];
+
+		roomUsers.forEach(({ index }) => {
+			const data = {
+				idGame: roomId,
 				idPlayer: index,
-			},
+			};
+
+			sendResponse('create_game', data, [index]);
 		});
-
-		websockets[pointers[index]]?.send(response);
-	});
-};
-
-export const turn = (...ids: (string | number)[]): void => {
-	ids.forEach((currentPlayer) => {
-		const response = stringifyData({
-			id: 0,
-			type: 'turn',
-			data: { currentPlayer },
-		});
-
-		websockets[pointers[currentPlayer]]?.send(response);
-	});
-};
-
-export const finish = (
-	winPlayer: string | number,
-	losePlayer: string | number
-): boolean => {
-	const isFinish = mapStates[winPlayer].every(({ broken }) => broken);
-
-	if (isFinish) {
-		const response = stringifyData({
-			id: 0,
-			type: 'finish',
-			data: {
-				winPlayer,
-			},
-		});
-
-		websockets[pointers[winPlayer]]?.send(response);
-
-		websockets[pointers[losePlayer]]?.send(response);
 	}
 
-	return isFinish;
-};
+	static startGame(player: Player): void {
+		const { gameId, indexPlayer } = player;
 
-export const startGame = (player: Player): void => {
-	const { gameId } = player;
+		this.games[gameId].push(player);
 
-	const game = mapGames.get(gameId)!;
+		this.createState(indexPlayer);
 
-	game.players.push(player);
+		if (this.games[gameId].length < 2) {
+			return;
+		}
 
-	mapGames.set(gameId, game);
+		const ids: (string | number)[] = [];
 
-	createStatus(player);
+		this.games[gameId].forEach(({ ships, indexPlayer }) => {
+			ids.push(indexPlayer);
 
-	if (game.players.length !== 2) {
-		return;
-	}
-
-	const ids: (string | number)[] = [];
-
-	game.players.forEach(({ ships, indexPlayer }) => {
-		ids.push(indexPlayer);
-
-		const response = stringifyData({
-			id: 0,
-			type: 'start_game',
-			data: {
+			const data = {
 				ships,
 				currentPlayerIndex: indexPlayer,
-			},
+			};
+
+			sendResponse('start_game', data, [indexPlayer]);
 		});
 
-		websockets[pointers[indexPlayer]]?.send(response);
-	});
+		this.turnGame(ids);
+	}
 
-	turn(...ids);
-};
+	static attack({
+		gameId,
+		indexPlayer,
+		x = getRandom(),
+		y = getRandom(),
+	}: Attack): boolean {
+		const players = this.games[gameId];
 
-export const attack = ({
-	gameId,
-	indexPlayer,
-	x = getRandom(),
-	y = getRandom(),
-}: Attack): boolean => {
-	const { players } = mapGames.get(gameId)!;
+		const { ships, indexPlayer: opponentId } = players.find(
+			(player) => player.indexPlayer !== indexPlayer
+		)!;
 
-	const { ships, indexPlayer: opponentId } = players.find(
-		(player) => player.indexPlayer !== indexPlayer
-	)!;
+		const position = { x, y };
 
-	const position = { x, y };
+		const status = this.getAttackStatus(indexPlayer, ships, position);
 
-	const attackResult = checkAttack(indexPlayer, ships, position);
+		players.forEach(({ indexPlayer }) => {
+			status.position.forEach((position) => {
+				const data = { ...status, position };
 
-	const responses = getAttackResponse(attackResult, position);
-
-	players.forEach(({ indexPlayer }) => {
-		responses.forEach((response) => {
-			websockets[pointers[indexPlayer]].send(response);
+				sendResponse('attack', data, [indexPlayer]);
+			});
 		});
-	});
 
-	turn(indexPlayer, opponentId);
-	return finish(indexPlayer, opponentId);
-};
+		this.turnGame([indexPlayer, opponentId]);
+		return this.finishGame(indexPlayer, opponentId);
+	}
+}

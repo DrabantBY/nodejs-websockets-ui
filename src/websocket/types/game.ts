@@ -3,13 +3,11 @@ export type Position = {
 	y: number;
 };
 
-type ShipSize = 'small' | 'medium' | 'large' | 'huge';
-
 export type Ship = {
 	position: Position;
 	direction: boolean;
 	length: number;
-	type: ShipSize;
+	type: 'small' | 'medium' | 'large' | 'huge';
 };
 
 export type Attack = {
@@ -17,12 +15,10 @@ export type Attack = {
 	indexPlayer: number | string;
 } & Partial<Position>;
 
-export type AttackResult = {
-	killed: boolean;
-	shot: boolean;
-	index: number;
-	direction: boolean;
+export type StatusData = {
+	position: Position[];
 	currentPlayer: number | string;
+	status: 'miss' | 'shot' | 'killed';
 };
 
 export type AttackRequest = {
