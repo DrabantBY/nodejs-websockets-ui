@@ -28,8 +28,8 @@ export default class GameService extends StateService {
 	}
 
 	private static turnGame(ids: (string | number)[]): void {
-		ids.forEach((currentPlayer) => {
-			sendResponse('turn', { currentPlayer }, [currentPlayer]);
+		ids.forEach((id) => {
+			sendResponse('turn', { currentPlayer: ids[1] }, [id]);
 		});
 	}
 
