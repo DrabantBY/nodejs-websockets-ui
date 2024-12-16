@@ -134,7 +134,12 @@ export default class GameService extends StateService {
 			});
 		});
 
-		this.turnGame([indexPlayer, opponentId]);
+		const ids =
+			dataList[0].status === 'miss'
+				? [indexPlayer, opponentId]
+				: [opponentId, indexPlayer];
+
+		this.turnGame(ids);
 		return this.finishGame(indexPlayer, opponentId);
 	}
 }
