@@ -35,11 +35,13 @@ export default class GameService extends StateService {
 
 	private static finishGame(
 		winPlayer: string | number,
-		losePlayer: string | number
+		losePlayer: string | number,
+		gameId: string | number
 	): boolean {
 		const isFinish = this.checkShipListBroken(winPlayer);
 
 		if (isFinish) {
+			delete this.games[gameId];
 			sendResponse('finish', { winPlayer }, [winPlayer, losePlayer]);
 		}
 
@@ -140,6 +142,6 @@ export default class GameService extends StateService {
 				: [opponentId, indexPlayer];
 
 		this.turnGame(ids);
-		return this.finishGame(indexPlayer, opponentId);
+		return this.finishGame(indexPlayer, opponentId, gameId);
 	}
 }
