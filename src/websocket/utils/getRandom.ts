@@ -1,3 +1,3 @@
-const getRandom = (): number => Math.floor(Math.random() * 10);
+const getRandom = (n: number): number => Math.floor(Math.random() * n);
 
 export default getRandom;

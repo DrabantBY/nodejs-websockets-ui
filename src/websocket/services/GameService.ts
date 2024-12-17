@@ -1,10 +1,11 @@
 import StateService from './StateService.ts';
 import sendResponse from '../utils/sendResponse.ts';
 import getRandom from '../utils/getRandom.ts';
+import { MAX_SIZE } from '../const/size.ts';
 
 import type {
 	Attack,
-	StatusData,
+	Status,
 	Player,
 	Position,
 	Ship,
@@ -52,7 +53,7 @@ export default class GameService extends StateService {
 		currentPlayer: string | number,
 		ships: Ship[],
 		position: Position
-	): StatusData[] {
+	): Status[] {
 		for (let i = 0; i < ships.length; i++) {
 			const isAttackSuccess = this.checkIsAttackSuccess(position, ships[i]);
 
@@ -117,8 +118,8 @@ export default class GameService extends StateService {
 	static attack({
 		gameId,
 		indexPlayer,
-		x = getRandom(),
-		y = getRandom(),
+		x = getRandom(MAX_SIZE),
+		y = getRandom(MAX_SIZE),
 	}: Attack): boolean {
 		const players = this.games[gameId];
 

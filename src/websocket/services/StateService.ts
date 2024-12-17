@@ -1,15 +1,11 @@
-import type { Position, Ship, StatusData } from '../types/game.ts';
-
-interface State {
-	broken: boolean;
-	hits: number[];
-}
+import { MAX_SIZE, MIN_SIZE } from '../const/size.ts';
+import type { Position, Ship, Status, State } from '../types/game.ts';
 
 export default class StateService {
 	private static states: Record<string | number, State[]> = {};
 
 	protected static createState(id: string | number): void {
-		const stateShips: State[] = Array.from({ length: 10 }, (_) => ({
+		const stateShips: State[] = Array.from({ length: MAX_SIZE }, (_) => ({
 			broken: false,
 			hits: [],
 		}));
@@ -22,7 +18,7 @@ export default class StateService {
 		position: Position,
 		ship: Ship,
 		index: number
-	): StatusData[] {
+	): Status[] {
 		const shipState = this.states[currentPlayer][index];
 
 		const hit = ship.direction ? position.y : position.x;
@@ -69,7 +65,7 @@ export default class StateService {
 		hits: number[],
 		direction: boolean,
 		position: Position
-	): StatusData[] {
+	): Status[] {
 		return hits.map((hit) => ({
 			position: direction
 				? { x: position.x, y: hit }
@@ -84,7 +80,7 @@ export default class StateService {
 		hits: number[],
 		direction: boolean,
 		{ x, y }: Position
-	): StatusData[] {
+	): Status[] {
 		const positions: Position[] = [];
 
 		const sortedHits = hits.toSorted();
@@ -124,7 +120,8 @@ export default class StateService {
 		}
 
 		const filteredPositions = positions.filter(
-			({ x, y }) => x >= 0 && x < 10 && y >= 0 && y < 10
+			({ x, y }) =>
+				x >= MIN_SIZE && x < MAX_SIZE && y >= MIN_SIZE && y < MAX_SIZE
 		);
 
 		return filteredPositions.map((position) => ({

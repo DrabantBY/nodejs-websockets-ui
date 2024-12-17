@@ -1,6 +1,7 @@
 import GuardService from './services/GuardService.ts';
 import GameService from './services/GameService.ts';
 import RoomService from './services/RoomService.ts';
+import BotService from './services/BotService.ts';
 import WinnerService from './services/WinnerService.ts';
 import RegService from './services/RegService.ts';
 import parseRawData from './utils/parseRawData.ts';
@@ -10,6 +11,7 @@ import type WebSocket from 'ws';
 
 export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 	let currentUser: string;
+	let Bot: BotService;
 
 	const key = req.headers['sec-websocket-key']!;
 
@@ -39,14 +41,27 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				break;
 
 			case GuardService.isAddShipsRequest(request):
-				GameService.startGame(request.data);
+				// console.log(JSON.stringify(request.data));
+				if (Bot) {
+					Bot.startGame(request.data);
+				} else {
+					GameService.startGame(request.data);
+				}
+
 				break;
 
 			case GuardService.isAttackRequest(request):
-				const isWin = GameService.attack(request.data);
+				const isWin = Bot
+					? Bot.attack(request.data)
+					: GameService.attack(request.data);
 				if (isWin) {
 					WinnerService.updateWinners(currentUser);
 				}
+				break;
+
+			case GuardService.isSinglePlayRequest(request):
+				Bot = new BotService(currentUser);
+				Bot.createGame();
 				break;
 		}
 	});

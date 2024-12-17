@@ -15,7 +15,7 @@ export type Attack = {
 	indexPlayer: number | string;
 } & Partial<Position>;
 
-export type StatusData = {
+export type Status = {
 	position: Position;
 	currentPlayer: number | string;
 	status: 'miss' | 'shot' | 'killed';
@@ -50,4 +50,9 @@ export interface Reg {
 	index: string | number;
 	error: boolean;
 	errorText: string;
+}
+
+export interface State {
+	broken: boolean;
+	hits: number[];
 }
