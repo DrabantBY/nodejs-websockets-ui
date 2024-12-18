@@ -53,6 +53,10 @@ export default class BotService extends Service {
 		this.send('turn', { currentPlayer });
 	}
 
+	private finish(winPlayer: string | number) {
+		this.send('finish', { winPlayer });
+	}
+
 	private getAttackResult(
 		attackPosition: Position,
 		ships: Ship[]
@@ -136,6 +140,12 @@ export default class BotService extends Service {
 			this.send('attack', data);
 		});
 		this.turn(currentPlayer);
+
+		const isWin = this.checkWinState('bot');
+
+		if (isWin) {
+			this.finish(currentPlayer);
+		}
 	}
 
 	private botAttack(): void {
@@ -160,26 +170,38 @@ export default class BotService extends Service {
 
 		const { broken, damage, direction } = this.state[this.userId][point];
 
-		if (broken) {
-			const dataList = this.getBrokenData(
-				currentPlayer,
-				damage,
-				direction,
-				position
-			);
-
-			dataList.forEach((data) => {
-				this.send('attack', data);
-			});
-		} else {
+		if (!broken) {
 			const data = { position, currentPlayer, status: 'shot' };
 			this.send('attack', data);
+			this.turn(currentPlayer);
+			setTimeout(() => {
+				this.botAttack();
+			}, DELAY);
+			return;
 		}
 
+		const dataList = this.getBrokenData(
+			currentPlayer,
+			damage,
+			direction,
+			position
+		);
+
+		dataList.forEach((data) => {
+			this.send('attack', data);
+		});
+
 		this.turn(currentPlayer);
-		setTimeout(() => {
-			this.botAttack();
-		}, DELAY);
+
+		const isWinner = this.checkWinState(this.userId);
+
+		if (isWinner) {
+			this.finish(currentPlayer);
+		} else {
+			setTimeout(() => {
+				this.botAttack();
+			}, DELAY);
+		}
 	}
 
 	protected getSpaceData(

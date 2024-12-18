@@ -8,6 +8,10 @@ export default class Service {
 		return { broken: false, damage: [], length, direction };
 	}
 
+	protected checkWinState(id: string | number): boolean {
+		return this.state[id].every(({ broken }) => broken);
+	}
+
 	protected updateStateShip(
 		id: string | number,
 		point: number,
