@@ -19,12 +19,14 @@ export default class BotService extends Service {
 	private readonly gameId: string | number = v4();
 	private readonly userId: string | number;
 	private readonly userWs: WebSocket;
+	private readonly name: string;
 	private readonly botShips: Ship[] = SHIPS[getRandom(SHIPS.length)];
 	private readonly positions = new Set<string>();
 	private userShips: Ship[] = [];
 
-	constructor(name: string | number, ws: WebSocket) {
+	constructor(name: string, ws: WebSocket) {
 		super();
+		this.name = name;
 		this.userId = users[name].index;
 		this.userWs = ws;
 		this.state.bot = this.botShips.map(this.addState);
@@ -100,7 +102,7 @@ export default class BotService extends Service {
 		indexPlayer: currentPlayer,
 		x = getRandom(MAX_SIZE),
 		y = getRandom(MAX_SIZE),
-	}: Attack): void {
+	}: Attack): null | string {
 		const position = { x, y };
 
 		const { success, point, attack } = this.getAttackResult(
@@ -115,7 +117,7 @@ export default class BotService extends Service {
 			setTimeout(() => {
 				this.botAttack();
 			}, DELAY);
-			return;
+			return null;
 		}
 
 		this.updateStateShip('bot', point, attack);
@@ -126,7 +128,7 @@ export default class BotService extends Service {
 			const data = { position, currentPlayer, status: 'shot' };
 			this.send('attack', data);
 			this.turn(currentPlayer);
-			return;
+			return null;
 		}
 
 		const dataList = this.getBrokenData(
@@ -145,10 +147,12 @@ export default class BotService extends Service {
 
 		if (isWin) {
 			this.finish(currentPlayer);
+			return this.name;
 		}
+		return null;
 	}
 
-	private botAttack(): void {
+	private botAttack(): null | string {
 		const position = this.getRandomPosition();
 		this.positions.add(`${position.x}:${position.y}`);
 
@@ -163,7 +167,7 @@ export default class BotService extends Service {
 			const data = { position, currentPlayer, status: 'miss' };
 			this.send('attack', data);
 			this.turn(this.userId);
-			return;
+			return null;
 		}
 
 		this.updateStateShip(this.userId, point, attack);
@@ -177,7 +181,7 @@ export default class BotService extends Service {
 			setTimeout(() => {
 				this.botAttack();
 			}, DELAY);
-			return;
+			return null;
 		}
 
 		const dataList = this.getBrokenData(
@@ -197,11 +201,13 @@ export default class BotService extends Service {
 
 		if (isWinner) {
 			this.finish(currentPlayer);
-		} else {
-			setTimeout(() => {
-				this.botAttack();
-			}, DELAY);
+			return 'bot';
 		}
+
+		setTimeout(() => {
+			this.botAttack();
+		}, DELAY);
+		return null;
 	}
 
 	protected getSpaceData(

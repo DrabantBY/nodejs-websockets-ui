@@ -50,12 +50,20 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				break;
 
 			case GuardService.isAttackRequest(request):
-				const isWin = Bot
-					? Bot.userAttack(request.data)
-					: GameService.attack(request.data);
-				if (isWin) {
-					WinnerService.updateWinners(currentUser);
+				if (Bot) {
+					const winner = Bot.userAttack(request.data);
+					if (winner) {
+						WinnerService.updateWinners(currentUser);
+						Bot = null;
+					}
+				} else {
+					const isWin = GameService.attack(request.data);
+					if (isWin) {
+						WinnerService.updateWinners(currentUser);
+						Bot = null;
+					}
 				}
+
 				break;
 
 			case GuardService.isSinglePlayRequest(request):
