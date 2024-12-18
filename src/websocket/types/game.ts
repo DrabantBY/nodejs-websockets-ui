@@ -54,5 +54,13 @@ export interface Reg {
 
 export interface State {
 	broken: boolean;
-	hits: number[];
+	damage: number[];
+	length: number;
+	direction: boolean;
+}
+
+export interface AttackResult {
+	success: boolean;
+	point: number;
+	attack: number;
 }

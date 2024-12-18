@@ -2,12 +2,14 @@ import { MAX_SIZE, MIN_SIZE } from '../const/size.ts';
 import type { Position, Ship, Status, State } from '../types/game.ts';
 
 export default class StateService {
-	private static states: Record<string | number, State[]> = {};
+	static states: Record<string | number, State[]> = {};
 
 	protected static createState(id: string | number): void {
-		const stateShips: State[] = Array.from({ length: MAX_SIZE }, (_) => ({
+		const stateShips: State[] = Array.from({ length: MAX_SIZE }, () => ({
 			broken: false,
-			hits: [],
+			damage: [],
+			length: 0,
+			direction: false,
 		}));
 
 		this.states[id] = stateShips;
@@ -23,23 +25,23 @@ export default class StateService {
 
 		const hit = ship.direction ? position.y : position.x;
 
-		if (!shipState.hits.includes(hit)) {
-			shipState.hits.push(hit);
+		if (!shipState.damage.includes(hit)) {
+			shipState.damage.push(hit);
 		}
 
-		shipState.broken = shipState.hits.length === ship.length;
+		shipState.broken = shipState.damage.length === ship.length;
 
 		if (shipState.broken) {
 			const brokenStatuses = this.getBrokenSpace(
 				currentPlayer,
-				shipState.hits,
+				shipState.damage,
 				ship.direction,
 				position
 			);
 
 			const missedStatuses = this.getMissedSpace(
 				currentPlayer,
-				shipState.hits,
+				shipState.damage,
 				ship.direction,
 				position
 			);

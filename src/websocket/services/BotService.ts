@@ -1,67 +1,173 @@
 import { v4 } from 'uuid';
-import { MAX_SIZE } from '../const/size.ts';
+import { MAX_SIZE, DELAY } from '../const/size.ts';
+import SHIPS from '../const/ships.ts';
 import users from '../db/users.ts';
 import getRandom from '../utils/getRandom.ts';
-import sendResponse from '../utils/sendResponse.ts';
-import SHIPS from '../const/ships.ts';
-import type { Attack, Player, Ship } from '../types/game.ts';
+import Service from './Service.ts';
+import stringifyData from '../utils/stringifyData.ts';
+import type {
+	Attack,
+	Player,
+	Position,
+	Ship,
+	AttackResult,
+} from '../types/game.ts';
+import type WebSocket from 'ws';
 
-interface State {
-	broken: boolean;
-	hits: number[];
-}
+export default class BotService extends Service {
+	private readonly gameId: string | number = v4();
+	private readonly userId: string | number;
+	private readonly userWs: WebSocket;
+	private readonly botShips: Ship[] = SHIPS[getRandom(SHIPS.length)];
+	private readonly positions = new Set<Position>();
 
-export default class BotService {
-	private gameId: string | number = v4();
-	private userId: string | number;
-	private bot: Player = {
-		gameId: this.gameId,
-		indexPlayer: 'bot',
-		ships: SHIPS[getRandom(SHIPS.length)],
-	};
-	private game: Player[] = [this.bot];
-	private gameState: Record<string | number, State[]> = {
-		bot: this.bot.ships.map(() => ({ broken: false, hits: [] })),
-	};
+	private userShips: Ship[] = [];
 
-	constructor(name: string | number) {
+	constructor(name: string | number, ws: WebSocket) {
+		super();
 		this.userId = users[name].index;
+		this.userWs = ws;
+		this.state.bot = this.botShips.map(this.addState);
 	}
 
-	private turn(id?: string | number) {
-		const currentPlayer = id ?? 'bot';
-		sendResponse('turn', { currentPlayer }, [this.userId]);
+	private send(type: string, data: unknown): void {
+		const response = stringifyData({
+			id: 0,
+			type,
+			data,
+		});
+
+		this.userWs.send(response);
+	}
+
+	private turn(currentPlayer: string | number) {
+		this.send('turn', { currentPlayer });
+	}
+
+	private getAttackResult(
+		attackPosition: Position,
+		ships: Ship[]
+	): AttackResult {
+		let result = { success: false, point: NaN, attack: NaN };
+
+		for (let i = 0; i < ships.length; i++) {
+			result.success = this.checkDamage(ships[i], attackPosition);
+
+			if (result.success) {
+				result.point = i;
+				result.attack = ships[i].direction
+					? attackPosition.y
+					: attackPosition.x;
+				break;
+			}
+		}
+
+		return result;
 	}
 
 	createGame() {
 		const data = { idGame: this.gameId, idPlayer: this.userId };
-		sendResponse('create_game', data, [this.userId]);
+		this.send('create_game', data);
 	}
 
-	startGame(player: Player) {
-		this.game.push(player);
-
-		const { ships, indexPlayer: currentPlayerIndex } = player;
+	startGame({ ships, indexPlayer: currentPlayerIndex }: Player) {
+		this.userShips = ships;
+		this.state[currentPlayerIndex] = ships.map(this.addState);
 
 		const data = {
 			ships,
 			currentPlayerIndex,
 		};
 
-		sendResponse('start_game', data, [currentPlayerIndex]);
-
+		this.send('start_game', data);
 		this.turn(currentPlayerIndex);
 	}
 
-	attack({
-		indexPlayer,
+	userAttack({
+		indexPlayer: currentPlayer,
 		x = getRandom(MAX_SIZE),
 		y = getRandom(MAX_SIZE),
 	}: Attack): void {
-		console.log(indexPlayer);
-
 		const position = { x, y };
 
-		// const dataList = this.getAttackStatus(indexPlayer, ships, position);
+		const { success, point, attack } = this.getAttackResult(
+			position,
+			this.botShips
+		);
+
+		if (!success) {
+			const data = { position, currentPlayer, status: 'miss' };
+			this.send('attack', data);
+			this.turn('bot');
+			setTimeout(() => {
+				this.botAttack();
+			}, DELAY);
+			return;
+		}
+
+		this.updateStateShip('bot', point, attack);
+
+		const { broken, damage, direction } = this.state.bot[point];
+
+		if (!broken) {
+			const data = { position, currentPlayer, status: 'shot' };
+			this.send('attack', data);
+			this.turn(currentPlayer);
+			return;
+		}
+
+		const dataList = this.getBrokenData(
+			currentPlayer,
+			damage,
+			direction,
+			position
+		);
+
+		dataList.forEach((data) => {
+			this.send('attack', data);
+		});
+		this.turn(currentPlayer);
+	}
+
+	private botAttack(): void {
+		const position = { x: getRandom(MAX_SIZE), y: getRandom(MAX_SIZE) };
+		const currentPlayer = 'bot';
+
+		const { success, point, attack } = this.getAttackResult(
+			position,
+			this.userShips
+		);
+
+		if (!success) {
+			const data = { position, currentPlayer, status: 'miss' };
+			this.send('attack', data);
+			this.turn(this.userId);
+			return;
+		}
+
+		this.updateStateShip(this.userId, point, attack);
+
+		const { broken, damage, direction } = this.state[this.userId][point];
+
+		if (broken) {
+			const dataList = this.getBrokenData(
+				currentPlayer,
+				damage,
+				direction,
+				position
+			);
+
+			dataList.forEach((data) => {
+				this.send('attack', data);
+			});
+		} else {
+			const data = { position, currentPlayer, status: 'shot' };
+			this.send('attack', data);
+		}
+
+		this.turn(currentPlayer);
+		setTimeout(() => {
+			this.botAttack();
+		}, DELAY);
 	}
 }

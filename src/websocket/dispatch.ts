@@ -10,8 +10,8 @@ import type { IncomingMessage } from 'node:http';
 import type WebSocket from 'ws';
 
 export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
-	let currentUser: string;
-	let Bot: BotService;
+	let currentUser: string = '';
+	let Bot: BotService | null = null;
 
 	const key = req.headers['sec-websocket-key']!;
 
@@ -41,7 +41,6 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				break;
 
 			case GuardService.isAddShipsRequest(request):
-				// console.log(JSON.stringify(request.data));
 				if (Bot) {
 					Bot.startGame(request.data);
 				} else {
@@ -52,7 +51,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 
 			case GuardService.isAttackRequest(request):
 				const isWin = Bot
-					? Bot.attack(request.data)
+					? Bot.userAttack(request.data)
 					: GameService.attack(request.data);
 				if (isWin) {
 					WinnerService.updateWinners(currentUser);
@@ -60,7 +59,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				break;
 
 			case GuardService.isSinglePlayRequest(request):
-				Bot = new BotService(currentUser);
+				Bot = new BotService(currentUser, ws);
 				Bot.createGame();
 				break;
 		}
