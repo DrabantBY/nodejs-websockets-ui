@@ -11,6 +11,7 @@ import type {
 	Position,
 	Ship,
 	AttackResult,
+	Status,
 } from '../types/game.ts';
 import type WebSocket from 'ws';
 
@@ -19,8 +20,7 @@ export default class BotService extends Service {
 	private readonly userId: string | number;
 	private readonly userWs: WebSocket;
 	private readonly botShips: Ship[] = SHIPS[getRandom(SHIPS.length)];
-	private readonly positions = new Set<Position>();
-
+	private readonly positions = new Set<string>();
 	private userShips: Ship[] = [];
 
 	constructor(name: string | number, ws: WebSocket) {
@@ -28,6 +28,15 @@ export default class BotService extends Service {
 		this.userId = users[name].index;
 		this.userWs = ws;
 		this.state.bot = this.botShips.map(this.addState);
+	}
+
+	private getRandomPosition(): Position {
+		const x = getRandom(MAX_SIZE);
+		const y = getRandom(MAX_SIZE);
+
+		return this.positions.has(`${x}:${y}`)
+			? this.getRandomPosition()
+			: { x, y };
 	}
 
 	private send(type: string, data: unknown): void {
@@ -130,7 +139,9 @@ export default class BotService extends Service {
 	}
 
 	private botAttack(): void {
-		const position = { x: getRandom(MAX_SIZE), y: getRandom(MAX_SIZE) };
+		const position = this.getRandomPosition();
+		this.positions.add(`${position.x}:${position.y}`);
+
 		const currentPlayer = 'bot';
 
 		const { success, point, attack } = this.getAttackResult(
@@ -169,5 +180,25 @@ export default class BotService extends Service {
 		setTimeout(() => {
 			this.botAttack();
 		}, DELAY);
+	}
+
+	protected getSpaceData(
+		currentPlayer: string | number,
+		damage: number[],
+		direction: boolean,
+		attackPosition: Position
+	): Status[] {
+		const data = super.getSpaceData(
+			currentPlayer,
+			damage,
+			direction,
+			attackPosition
+		);
+
+		data.forEach(({ position }) =>
+			this.positions.add(`${position.x}:${position.y}`)
+		);
+
+		return data;
 	}
 }
