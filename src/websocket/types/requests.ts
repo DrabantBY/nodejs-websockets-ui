@@ -1,11 +1,5 @@
 import type { Attack, Player, Login } from './game.ts';
 
-export type Common<T, D> = {
-	id: 0;
-	type: T;
-	data: D;
-};
-
 export enum TYPE {
 	REG_USER = 'reg',
 	ADD_ROOM = 'create_room',
@@ -16,7 +10,15 @@ export enum TYPE {
 	SINGLE = 'single_play',
 }
 
-type ID = { indexRoom: number | string };
+export interface Common<T, D> {
+	id: 0;
+	type: T;
+	data: D;
+}
+
+interface ID {
+	indexRoom: number | string;
+}
 
 export type LoginRequest = Common<TYPE.REG_USER, Login>;
 export type CreateRoomRequest = Common<TYPE.ADD_ROOM, ''>;

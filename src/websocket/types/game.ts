@@ -1,44 +1,49 @@
-export type Position = {
+export interface Position {
 	x: number;
 	y: number;
-};
+}
 
-export type Ship = {
+export interface Attack extends Partial<Position> {
+	gameId: number | string;
+	indexPlayer: number | string;
+}
+export interface AttackResult {
+	success: boolean;
+	point: number;
+	attack: number;
+}
+
+export interface Ship {
 	position: Position;
 	direction: boolean;
 	length: number;
 	type: 'small' | 'medium' | 'large' | 'huge';
-};
+}
 
-export type Attack = {
-	gameId: number | string;
-	indexPlayer: number | string;
-} & Partial<Position>;
-
-export type Status = {
+export interface Status {
 	position: Position;
 	currentPlayer: number | string;
 	status: 'miss' | 'shot' | 'killed';
-};
+}
 
-export type Player = {
+export interface Player {
 	gameId: number | string;
 	indexPlayer: number | string;
 	ships: Ship[];
-};
+}
 
-export type Game = {
+export interface Game {
 	gameId: number | string;
 	players: Player[];
-};
+}
 
-export type Room = {
+export interface Room {
 	roomId: number | string;
 	roomUsers: {
 		name: string;
 		index: string | number;
 	}[];
-};
+}
 
 export interface Login {
 	name: string;
@@ -57,10 +62,4 @@ export interface State {
 	damage: number[];
 	length: number;
 	direction: boolean;
-}
-
-export interface AttackResult {
-	success: boolean;
-	point: number;
-	attack: number;
 }
