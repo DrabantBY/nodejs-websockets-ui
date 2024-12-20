@@ -57,7 +57,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 
 			case GuardService.isAttackRequest(request):
 				winner = Bot
-					? Bot.userAttack(request.data)
+					? Bot.attack(request.data)
 					: GameService.attack(request.data);
 				if (winner) {
 					WinnerService.updateWinners(winner);
@@ -66,7 +66,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				break;
 
 			case GuardService.isSinglePlayRequest(request):
-				Bot = new BotService(currentUserName, ws);
+				Bot = new BotService(currentUserName, currentUserId);
 				Bot.createGame();
 				break;
 		}
