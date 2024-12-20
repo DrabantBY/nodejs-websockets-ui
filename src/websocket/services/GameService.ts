@@ -1,5 +1,4 @@
 import { MAX_SIZE } from '../const/size.ts';
-import sendResponse from '../utils/sendResponse.ts';
 import getRandom from '../utils/getRandom.ts';
 import StateService from './StateService.ts';
 import ResponseService from './ResponseService.ts';
@@ -7,10 +6,10 @@ import type { Attack, Player } from '../types/game.ts';
 import type { Room } from '../types/room.ts';
 
 export default class GameService {
-	private static games: Record<string | number, Player[]> = {};
-	private static gamers: Record<string | number, string> = {};
-	private static stateService = new StateService();
-	private static respService = new ResponseService();
+	private static readonly games: Record<string | number, Player[]> = {};
+	private static readonly gamers: Record<string | number, string> = {};
+	private static readonly stateService = new StateService();
+	private static readonly respService = new ResponseService();
 
 	static createGame({ roomId, roomUsers }: Room): void {
 		if (roomUsers.length < 2) {
@@ -32,31 +31,29 @@ export default class GameService {
 	}
 
 	static startGame(player: Player): void {
-		const { gameId, indexPlayer, ships } = player;
+		const { gameId, indexPlayer: currentPlayer, ships } = player;
 
-		this.stateService.createStateShip(indexPlayer, ships);
+		this.stateService.createStateShip(currentPlayer, ships);
 
-		this.games[gameId].push(player);
+		const players = this.games[gameId];
 
-		if (this.games[gameId].length < 2) {
+		players.push(player);
+
+		if (players.length < 2) {
 			return;
 		}
 
-		const ids: (string | number)[] = [];
-
-		this.games[gameId].forEach(({ ships, indexPlayer }) => {
-			ids.push(indexPlayer);
-
+		players.forEach(({ ships, indexPlayer: currentPlayerIndex }) => {
 			const data = {
 				ships,
-				currentPlayerIndex: indexPlayer,
+				currentPlayerIndex,
 			};
-
-			sendResponse('start_game', data, [indexPlayer]);
+			this.respService.sendById('start_game', data, currentPlayerIndex);
 		});
 
-		ids.forEach((id) => {
-			sendResponse('turn', { currentPlayer: ids[1] }, [id]);
+		players.forEach(({ indexPlayer }) => {
+			const data = { currentPlayer };
+			this.respService.sendById('turn', data, indexPlayer);
 		});
 	}
 
@@ -68,7 +65,7 @@ export default class GameService {
 	}: Attack): null | string {
 		const players = this.games[gameId];
 
-		const { ships: opponentShips, indexPlayer: opponentId } = players.find(
+		const { ships: enemyShips, indexPlayer: enemyId } = players.find(
 			({ indexPlayer }) => indexPlayer !== currentPlayer
 		)!;
 
@@ -76,38 +73,44 @@ export default class GameService {
 
 		const { success, point, attack } = this.stateService.getAttackResult(
 			position,
-			opponentShips
+			enemyShips
 		);
 
 		if (!success) {
-			const data = { position, currentPlayer, status: 'miss' };
+			const attackData = { position, currentPlayer, status: 'miss' };
 
 			players.forEach(({ indexPlayer }) => {
-				sendResponse('attack', data, [indexPlayer]);
+				this.respService.sendById('attack', attackData, indexPlayer);
 			});
 
-			sendResponse('turn', { currentPlayer: opponentId }, [currentPlayer]);
-			sendResponse('turn', { currentPlayer: opponentId }, [opponentId]);
+			const turnData = { currentPlayer: enemyId };
+
+			players.forEach(({ indexPlayer }) => {
+				this.respService.sendById('turn', turnData, indexPlayer);
+			});
 
 			return null;
 		}
 
-		this.stateService.updateStateShip(opponentId, point, attack);
+		this.stateService.updateStateShip(enemyId, point, attack);
 
 		const { broken, damage, direction } = this.stateService.getStateShip(
-			opponentId,
+			enemyId,
 			point
 		);
 
 		if (!broken) {
-			const data = { position, currentPlayer, status: 'shot' };
+			const attackData = { position, currentPlayer, status: 'shot' };
 
 			players.forEach(({ indexPlayer }) => {
-				sendResponse('attack', data, [indexPlayer]);
+				this.respService.sendById('attack', attackData, indexPlayer);
 			});
 
-			sendResponse('turn', { currentPlayer }, [currentPlayer]);
-			sendResponse('turn', { currentPlayer }, [opponentId]);
+			const turnData = { currentPlayer };
+
+			players.forEach(({ indexPlayer }) => {
+				this.respService.sendById('turn', turnData, indexPlayer);
+			});
 
 			return null;
 		}
@@ -121,22 +124,30 @@ export default class GameService {
 
 		players.forEach(({ indexPlayer }) => {
 			dataList.forEach((data) => {
-				sendResponse('attack', data, [indexPlayer]);
+				this.respService.sendById('attack', data, indexPlayer);
 			});
 		});
 
-		sendResponse('turn', { currentPlayer }, [currentPlayer]);
-		sendResponse('turn', { currentPlayer }, [opponentId]);
+		const isWin = this.stateService.checkWinState(enemyId);
 
-		const isWin = this.stateService.checkWinState(opponentId);
+		if (!isWin) {
+			const turnData = { currentPlayer };
 
-		if (isWin) {
-			delete this.games[gameId];
+			players.forEach(({ indexPlayer }) => {
+				this.respService.sendById('turn', turnData, indexPlayer);
+			});
 
-			sendResponse('finish', { winPlayer: currentPlayer }, [currentPlayer]);
-			sendResponse('finish', { winPlayer: currentPlayer }, [opponentId]);
-			return this.gamers[currentPlayer];
+			return null;
 		}
-		return null;
+
+		delete this.games[gameId];
+
+		const winData = { winPlayer: currentPlayer };
+
+		players.forEach(({ indexPlayer }) => {
+			this.respService.sendById('finish', winData, indexPlayer);
+		});
+
+		return this.gamers[currentPlayer];
 	}
 }

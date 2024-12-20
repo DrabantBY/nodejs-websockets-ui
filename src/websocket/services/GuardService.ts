@@ -1,3 +1,4 @@
+import { TYPE } from '../types/requests.ts';
 import type {
 	Common,
 	LoginRequest,
@@ -7,7 +8,6 @@ import type {
 	AttackRequest,
 	SinglePlayRequest,
 } from '../types/requests.ts';
-import { TYPE } from '../types/requests.ts';
 
 export default class GuardService {
 	static isRegRequest(

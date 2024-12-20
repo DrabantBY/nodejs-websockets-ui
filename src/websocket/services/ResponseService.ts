@@ -1,17 +1,17 @@
-import websockets from '../db/websockets.ts';
-import pointers from '../db/pointers.ts';
 import users from '../db/users.ts';
+import pointers from '../db/pointers.ts';
+import websockets from '../db/websockets.ts';
 
 import type { Common } from '../types/requests.ts';
 
 export default class ResponseService {
-	private stringifyData = (response: Common<unknown, unknown>): string => {
+	private stringifyData(response: Common<unknown, unknown>): string {
 		const json = JSON.stringify(response, (key, value) =>
 			key === 'data' ? JSON.stringify(value) : value
 		);
 
 		return json;
-	};
+	}
 
 	sendById(type: string, data: unknown, id: string | number) {
 		const res = this.stringifyData({ id: 0, type, data });

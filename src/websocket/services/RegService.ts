@@ -6,7 +6,7 @@ import ResponseService from './ResponseService.ts';
 import type { Reg, Login } from '../types/login.ts';
 
 export default class RegService {
-	private static respService = new ResponseService();
+	private static readonly respService = new ResponseService();
 
 	private static createUser(name: string, password: string, key: string): Reg {
 		const index = v4();

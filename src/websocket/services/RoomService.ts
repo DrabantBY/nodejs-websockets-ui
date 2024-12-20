@@ -3,8 +3,8 @@ import ResponseService from './ResponseService.ts';
 import type { Room } from '../types/room.ts';
 
 export default class RoomService {
-	private static rooms: Record<string | number, Room> = {};
-	private static respService = new ResponseService();
+	private static readonly rooms: Record<string | number, Room> = {};
+	private static readonly respService = new ResponseService();
 
 	static sendRooms(): void {
 		const data = Object.values(this.rooms);
