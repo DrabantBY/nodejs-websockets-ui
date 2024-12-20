@@ -11,6 +11,7 @@ import type WebSocket from 'ws';
 
 export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 	let currentUser: string = '';
+	let currentUserId: string | number = '';
 	let Bot: BotService | null = null;
 	let winner: string | null = null;
 
@@ -23,8 +24,9 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 
 		switch (true) {
 			case GuardService.isRegRequest(request):
-				RegService.login(request.data, key);
-				currentUser = request.data.name;
+				const { name, index } = RegService.login(request.data, key);
+				currentUser = name;
+				currentUserId = index;
 				RoomService.sendRooms();
 				WinnerService.sendWinners();
 				break;

@@ -3,12 +3,12 @@ import users from '../db/users.ts';
 import websockets from '../db/websockets.ts';
 import pointers from '../db/pointers.ts';
 import ResponseService from './ResponseService.ts';
-import type { Reg, Login } from '../types/game.ts';
+import type { Reg, Login } from '../types/login.ts';
 
 export default class RegService {
 	private static respService = new ResponseService();
 
-	private static createUser(name: string, password: string, key: string): void {
+	private static createUser(name: string, password: string, key: string): Reg {
 		const index = v4();
 
 		users[name] = {
@@ -19,7 +19,7 @@ export default class RegService {
 
 		pointers[index] = key;
 
-		const data: Reg = {
+		const data = {
 			name,
 			index,
 			error: false,
@@ -27,9 +27,11 @@ export default class RegService {
 		};
 
 		this.respService.sendById('reg', data, index);
+
+		return { name, index };
 	}
 
-	private static checkActiveUser(name: string, key: string): void {
+	private static checkActiveUser(name: string, key: string): Reg {
 		const { index } = users[name];
 
 		const isActive = pointers[index] in websockets;
@@ -38,7 +40,7 @@ export default class RegService {
 			pointers[index] = key;
 		}
 
-		const data: Reg = {
+		const data = {
 			name,
 			index,
 			error: isActive,
@@ -48,26 +50,26 @@ export default class RegService {
 		};
 
 		this.respService.sendByKey('reg', data, key);
+
+		return { name, index };
 	}
 
-	static login(login: Login, key: string): void {
+	static login(login: Login, key: string): Reg {
 		const { name, password } = login;
 
 		const isUserExist = name in users;
 
 		if (!isUserExist) {
-			this.createUser(name, password, key);
-			return;
+			return this.createUser(name, password, key);
 		}
 
 		const correctLogin = users[name]?.password === password;
 
 		if (correctLogin) {
-			this.checkActiveUser(name, key);
-			return;
+			return this.checkActiveUser(name, key);
 		}
 
-		const data: Reg = {
+		const data = {
 			name,
 			index: '',
 			error: isUserExist,
@@ -76,5 +78,7 @@ export default class RegService {
 		};
 
 		this.respService.sendByKey('reg', data, key);
+
+		return { name, index: '' };
 	}
 }

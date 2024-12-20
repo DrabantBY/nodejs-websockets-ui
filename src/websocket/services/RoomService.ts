@@ -2,9 +2,11 @@ import { v4 } from 'uuid';
 import users from '../db/users.ts';
 import sendResponse from '../utils/sendResponse.ts';
 import type { Room } from '../types/game.ts';
+import ResponseService from './ResponseService.ts';
 
 export default class RoomService {
 	private static rooms: Record<string | number, Room> = {};
+	private static respService = new ResponseService();
 
 	static sendRooms(): void {
 		const data = Object.values(this.rooms);

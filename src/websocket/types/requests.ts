@@ -1,4 +1,5 @@
-import type { Attack, Player, Login } from './game.ts';
+import type { Attack, Player } from './game.ts';
+import type { Login } from './login.ts';
 
 export enum TYPE {
 	REG_USER = 'reg',

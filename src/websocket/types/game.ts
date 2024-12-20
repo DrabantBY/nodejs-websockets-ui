@@ -45,18 +45,6 @@ export interface Room {
 	}[];
 }
 
-export interface Login {
-	name: string;
-	password: string;
-}
-
-export interface Reg {
-	name: string;
-	index: string | number;
-	error: boolean;
-	errorText: string;
-}
-
 export interface State {
 	broken: boolean;
 	damage: number[];
