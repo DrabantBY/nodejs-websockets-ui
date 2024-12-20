@@ -10,35 +10,7 @@ import type {
 export default class StateService {
 	private readonly state: Record<string | number, State[]> = {};
 
-	createState(id: string | number, ships: Ship[]): void {
-		this.state[id] = ships.map(({ length, direction }) => ({
-			broken: false,
-			damage: [],
-			length,
-			direction,
-		}));
-	}
-
-	checkWinState(id: string | number): boolean {
-		return this.state[id].every(({ broken }) => broken);
-	}
-
-	updateStateShip(id: string | number, point: number, attack: number): void {
-		const state = this.state[id][point];
-
-		if (state.damage.includes(attack)) {
-			return;
-		}
-
-		state.damage.push(attack);
-		state.broken = state.damage.length === state.length;
-	}
-
-	getStateShip(id: string | number, point: number): State {
-		return this.state[id][point];
-	}
-
-	checkDamage(ship: Ship, { x, y }: Position): boolean {
+	private checkDamage(ship: Ship, { x, y }: Position): boolean {
 		const { direction, position, length } = ship;
 
 		return direction
@@ -46,30 +18,7 @@ export default class StateService {
 			: y === position.y && x >= position.x && x < position.x + length;
 	}
 
-	getBrokenData(
-		currentPlayer: string | number,
-		damage: number[],
-		direction: boolean,
-		position: Position
-	): Status[] {
-		const damageData = this.getDamageData(
-			currentPlayer,
-			damage,
-			direction,
-			position
-		);
-
-		const spaceData = this.getSpaceData(
-			currentPlayer,
-			damage,
-			direction,
-			position
-		);
-
-		return damageData.concat(spaceData);
-	}
-
-	protected getDamageData(
+	private getDamageData(
 		currentPlayer: string | number,
 		damage: number[],
 		direction: boolean,
@@ -82,7 +31,7 @@ export default class StateService {
 		}));
 	}
 
-	protected getSpaceData(
+	private getSpaceData(
 		currentPlayer: string | number,
 		damage: number[],
 		direction: boolean,
@@ -136,6 +85,57 @@ export default class StateService {
 			currentPlayer,
 			status: 'miss',
 		}));
+	}
+
+	createStateShip(id: string | number, ships: Ship[]): void {
+		this.state[id] = ships.map(({ length, direction }) => ({
+			broken: false,
+			damage: [],
+			length,
+			direction,
+		}));
+	}
+
+	updateStateShip(id: string | number, point: number, attack: number): void {
+		const state = this.state[id][point];
+
+		if (state.damage.includes(attack)) {
+			return;
+		}
+
+		state.damage.push(attack);
+		state.broken = state.damage.length === state.length;
+	}
+
+	getStateShip(id: string | number, point: number): State {
+		return this.state[id][point];
+	}
+
+	checkWinState(id: string | number): boolean {
+		return this.state[id].every(({ broken }) => broken);
+	}
+
+	getBrokenData(
+		currentPlayer: string | number,
+		damage: number[],
+		direction: boolean,
+		position: Position
+	): Status[] {
+		const damageData = this.getDamageData(
+			currentPlayer,
+			damage,
+			direction,
+			position
+		);
+
+		const spaceData = this.getSpaceData(
+			currentPlayer,
+			damage,
+			direction,
+			position
+		);
+
+		return damageData.concat(spaceData);
 	}
 
 	getAttackResult(attackPosition: Position, ships: Ship[]): AttackResult {

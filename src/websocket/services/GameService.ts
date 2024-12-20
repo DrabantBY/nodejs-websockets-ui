@@ -18,6 +18,7 @@ export default class GameService {
 
 		roomUsers.forEach(({ name, index }) => {
 			this.gamers[index] = name;
+
 			const data = {
 				idGame: roomId,
 				idPlayer: index,
@@ -30,7 +31,7 @@ export default class GameService {
 	static startGame(player: Player): void {
 		const { gameId, indexPlayer, ships } = player;
 
-		this.stateService.createState(indexPlayer, ships);
+		this.stateService.createStateShip(indexPlayer, ships);
 
 		this.games[gameId].push(player);
 

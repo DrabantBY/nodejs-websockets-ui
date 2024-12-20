@@ -13,7 +13,7 @@ export default class BotService extends Service {
 	private readonly userId: string | number;
 	private readonly userWs: WebSocket;
 	private readonly botShips: Ship[] = SHIPS[getRandom(SHIPS.length)];
-	private readonly positions = new Set<string>();
+	// private readonly positions = new Set<string>();
 	private userShips: Ship[] = [];
 	private name: string;
 
@@ -22,16 +22,18 @@ export default class BotService extends Service {
 		this.userId = users[name].index;
 		this.name = name;
 		this.userWs = ws;
-		this.createState('bot', this.botShips);
+		this.createStateShip('bot', this.botShips);
 	}
 
 	private getRandomPosition(): Position {
 		const x = getRandom(MAX_SIZE);
 		const y = getRandom(MAX_SIZE);
 
-		return this.positions.has(`${x}:${y}`)
-			? this.getRandomPosition()
-			: { x, y };
+		return { x, y };
+
+		// return this.positions.has(`${x}:${y}`)
+		// 	? this.getRandomPosition()
+		// 	: { x, y };
 	}
 
 	private send(type: string, data: unknown): void {
@@ -59,7 +61,7 @@ export default class BotService extends Service {
 
 	startGame({ ships, indexPlayer: currentPlayerIndex }: Player) {
 		this.userShips = ships;
-		this.createState(currentPlayerIndex, ships);
+		this.createStateShip(currentPlayerIndex, ships);
 
 		const data = {
 			ships,
@@ -126,7 +128,7 @@ export default class BotService extends Service {
 
 	private botAttack(): null | string {
 		const position = this.getRandomPosition();
-		this.positions.add(`${position.x}:${position.y}`);
+		// this.positions.add(`${position.x}:${position.y}`);
 
 		const currentPlayer = 'bot';
 
@@ -180,25 +182,5 @@ export default class BotService extends Service {
 			this.botAttack();
 		}, DELAY);
 		return null;
-	}
-
-	protected getSpaceData(
-		currentPlayer: string | number,
-		damage: number[],
-		direction: boolean,
-		attackPosition: Position
-	): Status[] {
-		const data = super.getSpaceData(
-			currentPlayer,
-			damage,
-			direction,
-			attackPosition
-		);
-
-		data.forEach(({ position }) =>
-			this.positions.add(`${position.x}:${position.y}`)
-		);
-
-		return data;
 	}
 }

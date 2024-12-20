@@ -2,14 +2,11 @@ import { v4 } from 'uuid';
 import users from '../db/users.ts';
 import websockets from '../db/websockets.ts';
 import pointers from '../db/pointers.ts';
-import stringifyData from '../utils/stringifyData.ts';
+import ResponseService from './ResponseService.ts';
 import type { Reg, Login } from '../types/game.ts';
 
 export default class RegService {
-	private static relayData(data: Reg, key: string): void {
-		const res = stringifyData({ id: 0, type: 'reg', data });
-		websockets[key].send(res);
-	}
+	private static respService = new ResponseService();
 
 	private static createUser(name: string, password: string, key: string): void {
 		const index = v4();
@@ -29,7 +26,7 @@ export default class RegService {
 			errorText: '',
 		};
 
-		this.relayData(data, key);
+		this.respService.sendById('reg', data, index);
 	}
 
 	private static checkActiveUser(name: string, key: string): void {
@@ -50,7 +47,7 @@ export default class RegService {
 				: '',
 		};
 
-		this.relayData(data, key);
+		this.respService.sendByKey('reg', data, key);
 	}
 
 	static login(login: Login, key: string): void {
@@ -78,6 +75,6 @@ export default class RegService {
 				'User already exists. Please enter other user name or correct password.',
 		};
 
-		this.relayData(data, key);
+		this.respService.sendByKey('reg', data, key);
 	}
 }
