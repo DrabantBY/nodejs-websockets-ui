@@ -5,27 +5,48 @@ import getRandom from '../utils/getRandom.ts';
 import StateService from './StateService.ts';
 import ResponseService from './ResponseService.ts';
 import type { Attack, Player, Position, Ship } from '../types/game.ts';
+import FIELD from '../const/field.ts';
 
 export default class BotService extends StateService {
-	private readonly gameId: string | number = v4();
-	private readonly botShips: Ship[] = SHIPS[getRandom(SHIPS.length)];
-	private readonly respService = new ResponseService();
+	private readonly gameId: string | number;
 	private readonly userId: string | number;
+	private readonly indexes: Set<number>;
+	private readonly botShips: Ship[];
 	private readonly userName: string;
+	private readonly respService: ResponseService;
 	private userShips: Ship[] = [];
 
 	constructor(userName: string, userId: string | number) {
 		super();
+		this.gameId = v4();
 		this.userId = userId;
 		this.userName = userName;
+		this.botShips = SHIPS[getRandom(SHIPS.length)];
+		this.indexes = new Set();
+		this.respService = new ResponseService();
 		this.createStateShip('bot', this.botShips);
 	}
 
 	private getRandomPosition(): Position {
-		const x = getRandom(MAX_SIZE);
-		const y = getRandom(MAX_SIZE);
+		const index = getRandom(MAX_SIZE ** 2);
+		try {
+			if (this.indexes.has(index)) {
+				return this.getRandomPosition();
+			} else {
+				this.indexes.add(index);
+				return FIELD[index]!;
+			}
+		} catch {
+			return this.getRandomPosition();
+		}
+	}
 
-		return { x, y };
+	private addMissPosition({ x, y }: Position) {
+		const index = FIELD.findIndex(
+			(position) => position.x === x && position.y === y
+		);
+
+		this.indexes.add(index);
 	}
 
 	createGame() {
@@ -36,7 +57,6 @@ export default class BotService extends StateService {
 	startGame({ ships, indexPlayer }: Player) {
 		this.userShips = ships;
 		this.createStateShip(indexPlayer, ships);
-		console.log(ships);
 
 		const startGameData = {
 			ships,
@@ -55,52 +75,90 @@ export default class BotService extends StateService {
 		x = getRandom(MAX_SIZE),
 		y = getRandom(MAX_SIZE),
 	}: Attack): null | string {
-		const isBot = currentPlayer === 'bot';
-
 		const position = { x, y };
 
 		const { success, point, attack } = this.getAttackResult(
 			position,
-			isBot ? this.userShips : this.botShips
+			this.botShips
+		);
+
+		if (!success) {
+			const attackData = { position, currentPlayer, status: 'miss' };
+			this.respService.sendById('attack', attackData, currentPlayer);
+			this.respService.sendById(
+				'turn',
+				{ currentPlayer: 'bot' },
+				currentPlayer
+			);
+
+			return this.botAttack();
+		}
+
+		this.updateStateShip('bot', point, attack);
+
+		const { broken, damage, direction } = this.getStateShip('bot', point);
+
+		if (!broken) {
+			const attackData = { position, currentPlayer, status: 'shot' };
+			this.respService.sendById('attack', attackData, currentPlayer);
+			this.respService.sendById('turn', { currentPlayer }, currentPlayer);
+			return null;
+		}
+
+		const dataList = this.getBrokenData(
+			currentPlayer,
+			damage,
+			direction,
+			position
+		);
+
+		dataList.forEach((data) => {
+			this.respService.sendById('attack', data, currentPlayer);
+		});
+
+		const isWin = this.checkWinState('bot');
+
+		if (!isWin) {
+			this.respService.sendById('turn', { currentPlayer }, currentPlayer);
+			return null;
+		}
+		this.respService.sendById(
+			'finish',
+			{ winPlayer: currentPlayer },
+			currentPlayer
+		);
+		return this.userName;
+	}
+
+	private botAttack(): null | string {
+		const position = this.getRandomPosition();
+		const currentPlayer = 'bot';
+
+		const { success, point, attack } = this.getAttackResult(
+			position,
+			this.userShips
 		);
 
 		if (!success) {
 			const attackData = { position, currentPlayer, status: 'miss' };
 			this.respService.sendById('attack', attackData, this.userId);
-
-			const turnData = { currentPlayer: isBot ? this.userName : currentPlayer };
-			this.respService.sendById('turn', turnData, this.userId);
-
-			if (!isBot) {
-				setTimeout(() => {
-					this.attack({ gameId: this.gameId, indexPlayer: 'bot' });
-				}, DELAY);
-			}
-
+			this.respService.sendById(
+				'turn',
+				{ currentPlayer: this.userId },
+				this.userId
+			);
 			return null;
 		}
 
-		this.updateStateShip(isBot ? this.userId : 'bot', point, attack);
+		this.updateStateShip(this.userId, point, attack);
 
-		const { broken, damage, direction } = this.getStateShip(
-			isBot ? this.userId : 'bot',
-			point
-		);
+		const { broken, damage, direction } = this.getStateShip(this.userId, point);
 
 		if (!broken) {
 			const attackData = { position, currentPlayer, status: 'shot' };
 			this.respService.sendById('attack', attackData, this.userId);
-
-			const turnData = { currentPlayer };
-			this.respService.sendById('turn', turnData, this.userId);
-
-			if (isBot) {
-				setTimeout(() => {
-					this.attack({ gameId: this.gameId, indexPlayer: 'bot' });
-				}, DELAY);
-			}
-
-			return null;
+			this.respService.sendById('turn', { currentPlayer }, this.userId);
+			return this.botAttack();
 		}
 
 		const dataList = this.getBrokenData(
@@ -114,23 +172,25 @@ export default class BotService extends StateService {
 			this.respService.sendById('attack', data, this.userId);
 		});
 
-		const isWin = this.checkWinState(isBot ? this.userId : 'bot');
+		dataList.forEach(({ status, position }) => {
+			if (status === 'miss') {
+				this.addMissPosition(position);
+			}
+		});
+
+		const isWin = this.checkWinState(this.userId);
 
 		if (!isWin) {
-			const turnData = { currentPlayer };
-			this.respService.sendById('turn', turnData, this.userId);
-
-			if (isBot) {
-				setTimeout(() => {
-					this.attack({ gameId: this.gameId, indexPlayer: 'bot' });
-				}, DELAY);
-			}
-
-			return null;
+			this.respService.sendById('turn', { currentPlayer }, this.userId);
+			return this.botAttack();
 		}
 
-		const winData = { winPlayer: currentPlayer };
-		this.respService.sendById('finish', winData, this.userId);
-		return isBot ? 'bot' : this.userName;
+		this.respService.sendById(
+			'finish',
+			{ winPlayer: currentPlayer },
+			this.userId
+		);
+
+		return currentPlayer;
 	}
 }

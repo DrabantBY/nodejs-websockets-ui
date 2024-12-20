@@ -59,6 +59,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				winner = Bot
 					? Bot.attack(request.data)
 					: GameService.attack(request.data);
+
 				if (winner) {
 					WinnerService.updateWinners(winner);
 					Bot = null;
