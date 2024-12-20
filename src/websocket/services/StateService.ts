@@ -1,122 +1,127 @@
 import { MAX_SIZE, MIN_SIZE } from '../const/size.ts';
-import type { Position, Ship, Status, State } from '../types/game.ts';
+import type {
+	AttackResult,
+	Position,
+	Ship,
+	State,
+	Status,
+} from '../types/game.ts';
 
 export default class StateService {
-	static states: Record<string | number, State[]> = {};
+	private readonly state: Record<string | number, State[]> = {};
 
-	protected static createState(id: string | number): void {
-		const stateShips: State[] = Array.from({ length: MAX_SIZE }, () => ({
+	createState(id: string | number, ships: Ship[]): void {
+		this.state[id] = ships.map(({ length, direction }) => ({
 			broken: false,
 			damage: [],
-			length: 0,
-			direction: false,
+			length,
+			direction,
 		}));
-
-		this.states[id] = stateShips;
 	}
 
-	protected static updateState(
-		currentPlayer: string | number,
-		position: Position,
-		ship: Ship,
-		index: number
-	): Status[] {
-		const shipState = this.states[currentPlayer][index];
+	checkWinState(id: string | number): boolean {
+		return this.state[id].every(({ broken }) => broken);
+	}
 
-		const hit = ship.direction ? position.y : position.x;
+	updateStateShip(id: string | number, point: number, attack: number): void {
+		const state = this.state[id][point];
 
-		if (!shipState.damage.includes(hit)) {
-			shipState.damage.push(hit);
+		if (state.damage.includes(attack)) {
+			return;
 		}
 
-		shipState.broken = shipState.damage.length === ship.length;
-
-		if (shipState.broken) {
-			const brokenStatuses = this.getBrokenSpace(
-				currentPlayer,
-				shipState.damage,
-				ship.direction,
-				position
-			);
-
-			const missedStatuses = this.getMissedSpace(
-				currentPlayer,
-				shipState.damage,
-				ship.direction,
-				position
-			);
-
-			return brokenStatuses.concat(missedStatuses);
-		}
-
-		return [
-			{
-				position,
-				currentPlayer,
-				status: 'shot',
-			},
-		];
+		state.damage.push(attack);
+		state.broken = state.damage.length === state.length;
 	}
 
-	protected static checkShipListBroken(id: string | number): boolean {
-		return this.states[id].every(({ broken }) => broken);
+	getStateShip(id: string | number, point: number): State {
+		return this.state[id][point];
 	}
 
-	protected static getBrokenSpace(
+	checkDamage(ship: Ship, { x, y }: Position): boolean {
+		const { direction, position, length } = ship;
+
+		return direction
+			? x === position.x && y >= position.y && y < position.y + length
+			: y === position.y && x >= position.x && x < position.x + length;
+	}
+
+	getBrokenData(
 		currentPlayer: string | number,
-		hits: number[],
+		damage: number[],
 		direction: boolean,
 		position: Position
 	): Status[] {
-		return hits.map((hit) => ({
-			position: direction
-				? { x: position.x, y: hit }
-				: { x: hit, y: position.y },
+		const damageData = this.getDamageData(
+			currentPlayer,
+			damage,
+			direction,
+			position
+		);
+
+		const spaceData = this.getSpaceData(
+			currentPlayer,
+			damage,
+			direction,
+			position
+		);
+
+		return damageData.concat(spaceData);
+	}
+
+	protected getDamageData(
+		currentPlayer: string | number,
+		damage: number[],
+		direction: boolean,
+		{ x, y }: Position
+	): Status[] {
+		return damage.map((d) => ({
+			position: direction ? { x, y: d } : { x: d, y },
 			currentPlayer,
 			status: 'killed',
 		}));
 	}
 
-	protected static getMissedSpace(
+	protected getSpaceData(
 		currentPlayer: string | number,
-		hits: number[],
+		damage: number[],
 		direction: boolean,
 		{ x, y }: Position
 	): Status[] {
 		const positions: Position[] = [];
 
-		const sortedHits = hits.toSorted();
+		const damages = damage.toSorted();
 
-		for (let i = 0; i < sortedHits.length; i++) {
+		for (let i = 0; i < damages.length; i++) {
 			if (direction) {
-				positions.push({ x: x - 1, y: sortedHits[i] });
-				positions.push({ x: x + 1, y: sortedHits[i] });
+				positions.push({ x: x - 1, y: damages[i] });
+				positions.push({ x: x + 1, y: damages[i] });
 
 				if (i === 0) {
-					positions.push({ x, y: sortedHits[i] - 1 });
-					positions.push({ x: x - 1, y: sortedHits[i] - 1 });
-					positions.push({ x: x + 1, y: sortedHits[i] - 1 });
+					positions.push({ x, y: damages[i] - 1 });
+					positions.push({ x: x - 1, y: damages[i] - 1 });
+					positions.push({ x: x + 1, y: damages[i] - 1 });
 				}
 
-				if (i === sortedHits.length - 1) {
-					positions.push({ x, y: sortedHits[i] + 1 });
-					positions.push({ x: x - 1, y: sortedHits[i] + 1 });
-					positions.push({ x: x + 1, y: sortedHits[i] + 1 });
+				if (i === damages.length - 1) {
+					positions.push({ x, y: damages[i] + 1 });
+					positions.push({ x: x - 1, y: damages[i] + 1 });
+					positions.push({ x: x + 1, y: damages[i] + 1 });
 				}
 			} else {
-				positions.push({ x: sortedHits[i], y: y - 1 });
-				positions.push({ x: sortedHits[i], y: y + 1 });
+				positions.push({ x: damages[i], y: y - 1 });
+				positions.push({ x: damages[i], y: y + 1 });
 
 				if (i === 0) {
-					positions.push({ x: sortedHits[i] - 1, y });
-					positions.push({ x: sortedHits[i] - 1, y: y - 1 });
-					positions.push({ x: sortedHits[i] - 1, y: y + 1 });
+					positions.push({ x: damages[i] - 1, y });
+					positions.push({ x: damages[i] - 1, y: y - 1 });
+					positions.push({ x: damages[i] - 1, y: y + 1 });
 				}
 
-				if (i === sortedHits.length - 1) {
-					positions.push({ x: sortedHits[i] + 1, y });
-					positions.push({ x: sortedHits[i] + 1, y: y - 1 });
-					positions.push({ x: sortedHits[i] + 1, y: y + 1 });
+				if (i === damages.length - 1) {
+					positions.push({ x: damages[i] + 1, y });
+					positions.push({ x: damages[i] + 1, y: y - 1 });
+					positions.push({ x: damages[i] + 1, y: y + 1 });
 				}
 			}
 		}
@@ -131,5 +136,23 @@ export default class StateService {
 			currentPlayer,
 			status: 'miss',
 		}));
+	}
+
+	getAttackResult(attackPosition: Position, ships: Ship[]): AttackResult {
+		let result = { success: false, point: NaN, attack: NaN };
+
+		for (let i = 0; i < ships.length; i++) {
+			result.success = this.checkDamage(ships[i], attackPosition);
+
+			if (result.success) {
+				result.point = i;
+				result.attack = ships[i].direction
+					? attackPosition.y
+					: attackPosition.x;
+				break;
+			}
+		}
+
+		return result;
 	}
 }

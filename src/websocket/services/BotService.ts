@@ -3,33 +3,26 @@ import { MAX_SIZE, DELAY } from '../const/size.ts';
 import SHIPS from '../const/ships.ts';
 import users from '../db/users.ts';
 import getRandom from '../utils/getRandom.ts';
-import Service from './Service.ts';
+import Service from './StateService.ts';
 import stringifyData from '../utils/stringifyData.ts';
-import type {
-	Attack,
-	Player,
-	Position,
-	Ship,
-	AttackResult,
-	Status,
-} from '../types/game.ts';
+import type { Attack, Player, Position, Ship, Status } from '../types/game.ts';
 import type WebSocket from 'ws';
 
 export default class BotService extends Service {
 	private readonly gameId: string | number = v4();
 	private readonly userId: string | number;
 	private readonly userWs: WebSocket;
-	private readonly name: string;
 	private readonly botShips: Ship[] = SHIPS[getRandom(SHIPS.length)];
 	private readonly positions = new Set<string>();
 	private userShips: Ship[] = [];
+	private name: string;
 
 	constructor(name: string, ws: WebSocket) {
 		super();
-		this.name = name;
 		this.userId = users[name].index;
+		this.name = name;
 		this.userWs = ws;
-		this.state.bot = this.botShips.map(this.addState);
+		this.createState('bot', this.botShips);
 	}
 
 	private getRandomPosition(): Position {
@@ -59,27 +52,6 @@ export default class BotService extends Service {
 		this.send('finish', { winPlayer });
 	}
 
-	private getAttackResult(
-		attackPosition: Position,
-		ships: Ship[]
-	): AttackResult {
-		let result = { success: false, point: NaN, attack: NaN };
-
-		for (let i = 0; i < ships.length; i++) {
-			result.success = this.checkDamage(ships[i], attackPosition);
-
-			if (result.success) {
-				result.point = i;
-				result.attack = ships[i].direction
-					? attackPosition.y
-					: attackPosition.x;
-				break;
-			}
-		}
-
-		return result;
-	}
-
 	createGame() {
 		const data = { idGame: this.gameId, idPlayer: this.userId };
 		this.send('create_game', data);
@@ -87,7 +59,7 @@ export default class BotService extends Service {
 
 	startGame({ ships, indexPlayer: currentPlayerIndex }: Player) {
 		this.userShips = ships;
-		this.state[currentPlayerIndex] = ships.map(this.addState);
+		this.createState(currentPlayerIndex, ships);
 
 		const data = {
 			ships,
@@ -122,7 +94,7 @@ export default class BotService extends Service {
 
 		this.updateStateShip('bot', point, attack);
 
-		const { broken, damage, direction } = this.state.bot[point];
+		const { broken, damage, direction } = this.getStateShip('bot', point);
 
 		if (!broken) {
 			const data = { position, currentPlayer, status: 'shot' };
@@ -172,7 +144,7 @@ export default class BotService extends Service {
 
 		this.updateStateShip(this.userId, point, attack);
 
-		const { broken, damage, direction } = this.state[this.userId][point];
+		const { broken, damage, direction } = this.getStateShip(this.userId, point);
 
 		if (!broken) {
 			const data = { position, currentPlayer, status: 'shot' };
@@ -197,9 +169,9 @@ export default class BotService extends Service {
 
 		this.turn(currentPlayer);
 
-		const isWinner = this.checkWinState(this.userId);
+		const isWin = this.checkWinState(this.userId);
 
-		if (isWinner) {
+		if (isWin) {
 			this.finish(currentPlayer);
 			return 'bot';
 		}
