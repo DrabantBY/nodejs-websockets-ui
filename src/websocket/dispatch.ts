@@ -10,7 +10,7 @@ import type { IncomingMessage } from 'node:http';
 import type WebSocket from 'ws';
 
 export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
-	let currentUser: string = '';
+	let currentUserName: string = '';
 	let currentUserId: string | number = '';
 	let Bot: BotService | null = null;
 	let winner: string | null = null;
@@ -25,20 +25,24 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 		switch (true) {
 			case GuardService.isRegRequest(request):
 				const { name, index } = RegService.login(request.data, key);
-				currentUser = name;
+				currentUserName = name;
 				currentUserId = index;
 				RoomService.sendRooms();
 				WinnerService.sendWinners();
 				break;
 
 			case GuardService.isCreateRoomRequest(request):
-				RoomService.createRoom(currentUser);
+				RoomService.createRoom(currentUserName, currentUserId);
 				break;
 
 			case GuardService.isAddToRoomRequest(request):
 				const { indexRoom } = request.data;
-				RoomService.updateRoom(indexRoom, currentUser);
-				const room = RoomService.getRoomById(indexRoom);
+				const room = RoomService.updateRoom(
+					indexRoom,
+					currentUserName,
+					currentUserId
+				);
+
 				GameService.createGame(room);
 				RoomService.deleteRoom(indexRoom);
 				break;
@@ -62,7 +66,7 @@ export default function dispatch(ws: WebSocket, req: IncomingMessage): void {
 				break;
 
 			case GuardService.isSinglePlayRequest(request):
-				Bot = new BotService(currentUser, ws);
+				Bot = new BotService(currentUserName, ws);
 				Bot.createGame();
 				break;
 		}

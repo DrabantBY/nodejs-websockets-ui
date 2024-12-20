@@ -2,12 +2,15 @@ import { MAX_SIZE } from '../const/size.ts';
 import sendResponse from '../utils/sendResponse.ts';
 import getRandom from '../utils/getRandom.ts';
 import StateService from './StateService.ts';
-import type { Attack, Player, Room } from '../types/game.ts';
+import ResponseService from './ResponseService.ts';
+import type { Attack, Player } from '../types/game.ts';
+import type { Room } from '../types/room.ts';
 
 export default class GameService {
 	private static games: Record<string | number, Player[]> = {};
 	private static gamers: Record<string | number, string> = {};
 	private static stateService = new StateService();
+	private static respService = new ResponseService();
 
 	static createGame({ roomId, roomUsers }: Room): void {
 		if (roomUsers.length < 2) {
@@ -24,7 +27,7 @@ export default class GameService {
 				idPlayer: index,
 			};
 
-			sendResponse('create_game', data, [index]);
+			this.respService.sendById('create_game', data, index);
 		});
 	}
 

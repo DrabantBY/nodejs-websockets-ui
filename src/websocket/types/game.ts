@@ -37,14 +37,6 @@ export interface Game {
 	players: Player[];
 }
 
-export interface Room {
-	roomId: number | string;
-	roomUsers: {
-		name: string;
-		index: string | number;
-	}[];
-}
-
 export interface State {
 	broken: boolean;
 	damage: number[];
